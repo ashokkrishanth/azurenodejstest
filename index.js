@@ -77,3 +77,12 @@ app.post("/login", (req, res) => {
 		  }else {console.log(".....no account.......");res.send({ noaccount: "yes"});}
      });
   });
+
+app.get('/storeusers', function (req, res) {
+  console.log(req.checkbox);
+  db.query('select * from users', function (error, results, fields) {
+   if (error) throw error;
+   console.log(JSON.stringify(results));
+   res.end(JSON.stringify(results));
+ });
+});
