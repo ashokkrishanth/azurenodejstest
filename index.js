@@ -9,6 +9,6 @@ const session = require("express-session");
 const bcrypt = require("bcrypt");
 const moment = require('moment');
 
-app.get('/test', (req,res) => res.send('Hello testing123 Ashok Pandian'));
+app.get('/test', (req,res) => res.send('Hello kishanth Ashok Pandian'));
 app.listen(port, () => console.log('Server is running on port'+port));
 
