@@ -76,20 +76,27 @@ app.post("/login", (req, res) => {
   });
 
 
-app.get('/getordersummary', function (req, res) {
+app.post('/getordersummary', function (req, res) {
   //console.log(req);
   var return_data ={};
-  var data = [];
+  var storename = req.body.storename;
   var RFG87E10=0; var RFG93E10=0;var ULSD=0;var B5=0;var B20=0;var DEF=0; var total=0;
   var totRFG87E10=0; var totRFG93E10=0;var totULSD=0;var totB5=0;var totB20=0;var totDEF=0;
   console.log('..Inside get order summary');
+  console.log('..store name....'+storename);
   db.query("SET SESSION sql_mode=''");
-  db.query('select id,delivery_number,bill_of_lading_id,max(case when (product_name="UNL 87 RFG ETH 10%") then product_name else NULL end) as "RFG87E10",max(case when (product_name="UNL 87 RFG ETH 10%") then gross_gallons else NULL end) as "UNL87GrossGallons",max(case when (product_name="PREM 93 RFG ETH 10%") then product_name else NULL end) as "RFG93E10",max(case when (product_name="PREM 93 RFG ETH 10%") then gross_gallons else NULL end) as "PREM93GrossGallons",max(case when (product_name="ULSD CLEAR TXLED") then product_name else NULL end) as "ULSD",max(case when (product_name="ULSD CLEAR TXLED") then gross_gallons else NULL end) as "ULSDGrossGallons", max(case when (product_name="B20 Biodiesel") then product_name else NULL end) as "B20",max(case when (product_name="B20 Biodiesel") then gross_gallons else NULL end) as "B20GrossGallons" from store_inventory where dealer="Elan 10" and bol_status_description="Scheduled"  group by delivery_number order by delivery_number;', function (error, schresults, fields) {
+  db.query("select id,delivery_number,bill_of_lading_id,max(case when (product_name='UNL 87 RFG ETH 10%') then product_name else NULL end) as 'RFG87E10',max(case when (product_name='UNL 87 RFG ETH 10%') then gross_gallons else NULL end) as 'UNL87GrossGallons',max(case when (product_name='PREM 93 RFG ETH 10%') then product_name else NULL end) as 'RFG93E10',max(case when (product_name='PREM 93 RFG ETH 10%') then gross_gallons else NULL end) as 'PREM93GrossGallons',max(case when (product_name='ULSD CLEAR TXLED') then product_name else NULL end) as 'ULSD',max(case when (product_name='ULSD CLEAR TXLED') then gross_gallons else NULL end) as 'ULSDGrossGallons', max(case when (product_name='B20 Biodiesel') then product_name else NULL end) as 'B20',max(case when (product_name='B20 Biodiesel') then gross_gallons else NULL end) as 'B20GrossGallons' from store_inventory where dealer='"+storename+"' and bol_status_description='Scheduled'  group by delivery_number order by delivery_number", function (error, schresults, fields) {
     if (error) throw error;
     
-    db.query("select store_name,RFG87E10,RFG93E10,ULSD,B5,B20,DEF from price where store_name='Elan 1'", function (error, priceresults, fields) {
+    db.query("select store_name,RFG87E10,RFG93E10,ULSD,B5,B20,DEF from price where store_name='"+storename+"'", function (error, priceresults, fields) {
       if (error) throw error;
-      RFG87E10=priceresults[0].RFG87E10; RFG93E10=priceresults[0].RFG93E10; ULSD=priceresults[0].ULSD;
+      console.log("....test.....");
+      console.log("....ashok....."+priceresults[0].RFG87E10);
+      console.log("....test.1....");
+      if (priceresults[0].RFG87E10=='undefined'){
+        RFG87E10=0;} else {RFG87E10=priceresults[0].RFG87E10; }
+      
+      RFG93E10=priceresults[0].RFG93E10; ULSD=priceresults[0].ULSD;
       B5=priceresults[0].B5; B20=priceresults[0].B20; DEF=priceresults[0].DEF;
       console.log(schresults);
       var length = Object.keys(schresults).length;
@@ -101,18 +108,24 @@ app.get('/getordersummary', function (req, res) {
       }
     })
     return_data.availInventories = schresults;
-
-    db.query("select * from price where store_name='Elan 1'", function (error, results, fields) {
+    console.log("..ashok 1..");
+    db.query("select * from price where store_name='"+storename+"'", function (error, results, fields) {
       if (error) throw error;
       return_data.prices = results;
     });
-
+    console.log("..ashok 2..");
     db.query("SET SESSION sql_mode=''");
-    db.query('select id,delivery_number,bill_of_lading_id,max(case when (product_name="UNL 87 RFG ETH 10%") then product_name else NULL end) as "UNL 87 RFG",max(case when (product_name="UNL 87 RFG ETH 10%") then gross_gallons else NULL end) as "UNL87GrossGallons",max(case when (product_name="PREM 93 RFG ETH 10%") then product_name else NULL end) as "PREM 93 RFG",max(case when (product_name="PREM 93 RFG ETH 10%") then gross_gallons else NULL end) as "PREM93GrossGallons",max(case when (product_name="ULSD CLEAR TXLED") then product_name else NULL end) as "ULSD CLEAR TXLED",max(case when (product_name="ULSD CLEAR TXLED") then gross_gallons else NULL end) as "ULSDGrossGallons", max(case when (product_name="B20 Biodiesel") then product_name else NULL end) as "B20 Biodiesel",max(case when (product_name="B20 Biodiesel") then gross_gallons else NULL end) as "B20GrossGallons" from store_inventory where dealer="Elan 10" and bol_status_description="Out for Delivery"  group by delivery_number order by delivery_number;', function (error, intransitresults, fields) {
+    db.query("select id,delivery_number,bill_of_lading_id,max(case when (product_name='UNL 87 RFG ETH 10%') then product_name else NULL end) as 'UNL 87 RFG',max(case when (product_name='UNL 87 RFG ETH 10%') then gross_gallons else NULL end) as 'UNL87GrossGallons',max(case when (product_name='PREM 93 RFG ETH 10%') then product_name else NULL end) as 'PREM 93 RFG',max(case when (product_name='PREM 93 RFG ETH 10%') then gross_gallons else NULL end) as 'PREM93GrossGallons',max(case when (product_name='ULSD CLEAR TXLED') then product_name else NULL end) as 'ULSD CLEAR TXLED',max(case when (product_name='ULSD CLEAR TXLED') then gross_gallons else NULL end) as 'ULSDGrossGallons', max(case when (product_name='B20 Biodiesel') then product_name else NULL end) as 'B20 Biodiesel',max(case when (product_name='B20 Biodiesel') then gross_gallons else NULL end) as 'B20GrossGallons' from store_inventory where dealer='"+storename+"' and bol_status_description='Out for Delivery'  group by delivery_number order by delivery_number", function (error, intransitresults, fields) {
       if (error) throw error;
+
+      console.log("..ashok 4..");
+      console.log("..ashok 4..");
       return_data.intransit = intransitresults;
-      res.send(return_data);
+      console.log("..output.");
+      console.log(return_data);
+      res.send(JSON.stringify(return_data));
     });
+    console.log("..ashok 3..");
   });
 });
 
@@ -211,16 +224,19 @@ app.post('/getDashboardValues', function (req, res) {
   let completed="N";
   let totaldeliverynos=0;
   totaldeliverynos=req.body.checkedItems.length;
-  
+  console.log(" total delivery nos + "+totaldeliverynos);
   for (i = 0; i < req.body.checkedItems.length; i++) {
+    console.log(" output of checked items + "+req.body.checkedItems[i]);
     if (req.body.checkedItems[i]!=null){
+
+
       console.log(req.body.checkedItems[i]);
       db.query("select delivery_number,DATE_FORMAT(delivery_date,'%Y-%m-%d %H:%i:%s') AS 'delivery_date' from store_inventory where id='"+req.body.checkedItems[i]+"'", function (error, getdeliveryno, fields) {
         if (error) throw error;
         console.log(getdeliveryno[0].delivery_number + " delivery numbers");
         console.log(" getelsjlj delivery_date + "+ getdeliveryno[0].delivery_date);
         db.query("SET SESSION sql_mode=''");
-        db.query("select id,bill_of_lading_id,delivery_date,bol_status_description,max(case when (product_name='UNL 87 RFG ETH 10%') then product_name else NULL end) as 'UNL87RFG',max(case when (product_name='UNL 87 RFG ETH 10%') then gross_gallons else NULL end) as 'UNL87GrossGallons',max(case when (product_name='PREM 93 RFG ETH 10%') then product_name else NULL end) as 'PREM93RFG',max(case when (product_name='PREM 93 RFG ETH 10%') then gross_gallons else NULL end) as 'PREM93GrossGallons',max(case when (product_name='ULSD CLEAR TXLED') then product_name else NULL end) as 'ULSDCLEARTXLED',max(case when (product_name='ULSD CLEAR TXLED') then gross_gallons else NULL end) as 'ULSDGrossGallons', max(case when (product_name='B20 Biodiesel') then product_name else NULL end) as 'B20Biodiesel',max(case when (product_name='B20 Biodiesel') then gross_gallons else NULL end) as 'B20GrossGallons' from store_inventory where delivery_number='"+getdeliveryno[0].delivery_number+"'", function (error, productresults, fields) {
+        db.query("select id,bill_of_lading_id,delivery_date,bol_status_description,max(case when (product_name='UNL 87 RFG ETH 10%') then product_name else NULL end) as 'UNL87RFG',max(case when (product_name='UNL 87 RFG ETH 10%') then gross_gallons else NULL end) as 'UNL87GrossGallons',max(case when (product_name='PREM 93 RFG ETH 10%') then product_name else NULL end) as 'PREM93RFG',max(case when (product_name='PREM 93 RFG ETH 10%') then gross_gallons else NULL end) as 'PREM93GrossGallons',max(case when (product_name='ULSD CLEAR TXLED') then product_name else NULL end) as 'ULSDCLEARTXLED',max(case when (product_name='ULSD CLEAR TXLED') then gross_gallons else NULL end) as 'ULSDGrossGallons', max(case when (product_name='B20 Biodiesel') then product_name else NULL end) as 'B20Biodiesel',max(case when (product_name='B20 Biodiesel') then gross_gallons else NULL end) as 'B20GrossGallons' from store_inventory where dealer='"+store_name+"' and delivery_number='"+getdeliveryno[0].delivery_number+"'", function (error, productresults, fields) {
           if (error) throw error;
           console.log("get delivery_number...."+getdeliveryno[0].delivery_number);
           bol_status_description=productresults[0].bol_status_description;
@@ -232,15 +248,24 @@ app.post('/getDashboardValues', function (req, res) {
             db.query(sql, function (err, result) {if (err) throw err;console.log(result.affectedRows + " record(s) updated");
             });
             console.log("...before scheduled..and store name....."+store_name);
-              db.query("select RFG87E10 from elan_cust_prod_summary where name='"+store_name+"' and sheduled_or_transit='"+bol_status_description+"'", function (error, prodresults, fields) {
+            console.log("...bol_status_description....."+bol_status_description);
+              db.query("select RFG87E10 from elan_cust_prod_summary where name='"+store_name+"' and sheduled_or_transit='Scheduled'", function (error, prodresults, fields) {
                 if (error) throw error;
                 updRFG87E101=prodresults[0].RFG87E10;
                 if(updRFG87E101 >= (productresults[0].UNL87GrossGallons)) {
                   updRFG87E101 = updRFG87E101 - productresults[0].UNL87GrossGallons;
-                  var sql = "UPDATE elan_cust_prod_summary SET RFG87E10 = "+updRFG87E101+", cust_or_dealer='"+customer+"' WHERE name = '"+store_name+"' and sheduled_or_transit='"+bol_status_description+"'";
-                  db.query(sql, function (err, result) {
-                  if (err) throw err;
-                    //console.log(result.affectedRows + "update......");
+                  var sql = "UPDATE elan_cust_prod_summary SET RFG87E10 = "+updRFG87E101+" WHERE name = '"+store_name+"' and sheduled_or_transit='Scheduled'";
+                  db.query(sql, function (err, result) {if (err) throw err;
+                  });
+                }
+              });
+              db.query("select RFG87E10 from elan_cust_prod_summary where name='"+store_name+"' and sheduled_or_transit='Transit'", function (error, prodresults, fields) {
+                if (error) throw error;
+                updRFG87E101=prodresults[0].RFG87E10;
+                if(updRFG87E101 >= (productresults[0].UNL87GrossGallons)) {
+                  updRFG87E101 = updRFG87E101 - productresults[0].UNL87GrossGallons;
+                  var sql = "UPDATE elan_cust_prod_summary SET RFG87E10 = "+updRFG87E101+" WHERE name = '"+store_name+"' and sheduled_or_transit='Transit'";
+                  db.query(sql, function (err, result) {if (err) throw err;
                   });
                 }
               });
@@ -251,10 +276,7 @@ app.post('/getDashboardValues', function (req, res) {
                 if(updRFG87E10=="NaN"){updRFG87E10=0;}
                  updRFG87E10 = updRFG87E10 + productresults[0].UNL87GrossGallons;
                  var sql = "UPDATE elan_cust_prod_summary SET RFG87E10 = "+updRFG87E10+" WHERE name = '"+store_name+"' and sheduled_or_transit='Order'";
-                db.query(sql, function (err, result) {
-                if (err) throw err;
-                  //console.log(result.affectedRows + "update......");
-                });
+                db.query(sql, function (err, result) {if (err) throw err;});
               });
           }
           if(productresults[0].PREM93RFG=='PREM 93 RFG ETH 10%' && (productresults[0].PREM93GrossGallons >0)){
@@ -262,30 +284,31 @@ app.post('/getDashboardValues', function (req, res) {
             var sql = "INSERT INTO orders_prod_price_map(delivery_number,product_name,store_name,price_per_gallons,gallons,delivery_date,sheduled_or_transit) VALUES ('"+getdeliveryno[0].delivery_number+"','"+productresults[0].PREM93RFG+"','"+store_name+"','"+price_per_gallons+"',"+productresults[0].PREM93GrossGallons+",'"+getdeliveryno[0].delivery_date+"','"+bol_status_description+"')";
             db.query(sql, function (err, result) {if (err) throw err;console.log(result.affectedRows + " record(s) updated");
             });
-            db.query("select RFG93E10 from elan_cust_prod_summary where name='"+store_name+"' and sheduled_or_transit='"+bol_status_description+"'", function (error, prodresults, fields) {
+            db.query("select RFG93E10 from elan_cust_prod_summary where name='"+store_name+"' and sheduled_or_transit='Scheduled'", function (error, prodresults, fields) {
               if (error) throw error;
               updPREM93RFG=prodresults[0].RFG93E10;
-              console.log("...insdie the before update function..."+updPREM93RFG);
               if(updPREM93RFG >= (productresults[0].PREM93GrossGallons)){
                  updPREM93RFG = updPREM93RFG - productresults[0].PREM93GrossGallons;
-                var sql = "UPDATE elan_cust_prod_summary SET RFG93E10 = "+updPREM93RFG+", cust_or_dealer='"+customer+"' WHERE name = '"+store_name+"' and sheduled_or_transit='"+bol_status_description+"'";
-                db.query(sql, function (err, result) {
-                if (err) throw err;
-                  //console.log(result.affectedRows + "update......");
-                });
-              }
+                var sql = "UPDATE elan_cust_prod_summary SET RFG93E10 = "+updPREM93RFG+" WHERE name = '"+store_name+"' and sheduled_or_transit='Scheduled'";
+                db.query(sql, function (err, result) {if (err) throw err;});
+               }
+            });
+            db.query("select RFG93E10 from elan_cust_prod_summary where name='"+store_name+"' and sheduled_or_transit='Transit'", function (error, prodresults, fields) {
+              if (error) throw error;
+              updPREM93RFG=prodresults[0].RFG93E10;
+              if(updPREM93RFG >= (productresults[0].PREM93GrossGallons)){
+                 updPREM93RFG = updPREM93RFG - productresults[0].PREM93GrossGallons;
+                var sql = "UPDATE elan_cust_prod_summary SET RFG93E10 = "+updPREM93RFG+" WHERE name = '"+store_name+"' and sheduled_or_transit='Transit'";
+                db.query(sql, function (err, result) {if (err) throw err;});
+               }
             });
             db.query("select RFG93E10 from elan_cust_prod_summary where name='"+store_name+"' and sheduled_or_transit='Order'", function (error, prodresults, fields) {
               if (error) throw error;
               updPREM93RFG=prodresults[0].RFG93E10;
               if(updPREM93RFG=="NaN"){updPREM93RFG=0;}
-              console.log("...insdie the before update function..."+updPREM93RFG);
               updPREM93RFG = updPREM93RFG + productresults[0].PREM93GrossGallons;
               var sql = "UPDATE elan_cust_prod_summary SET RFG93E10 = "+updPREM93RFG+" WHERE name = '"+store_name+"' and sheduled_or_transit='Order'";
-              db.query(sql, function (err, result) {
-              if (err) throw err;
-                //console.log(result.affectedRows + "update......");
-              });
+              db.query(sql, function (err, result) {if (err) throw err;});
             });
           }          
           if(productresults[0].ULSDCLEARTXLED=='ULSD CLEAR TXLED' && (productresults[0].ULSDGrossGallons >0)){
@@ -293,30 +316,32 @@ app.post('/getDashboardValues', function (req, res) {
             var sql = "INSERT INTO orders_prod_price_map(delivery_number,product_name,store_name,price_per_gallons,gallons,delivery_date,sheduled_or_transit) VALUES ('"+getdeliveryno[0].delivery_number+"','"+productresults[0].ULSDCLEARTXLED+"','"+store_name+"','"+price_per_gallons+"',"+productresults[0].ULSDGrossGallons+",'"+getdeliveryno[0].delivery_date+"','"+bol_status_description+"')";
             db.query(sql, function (err, result) {if (err) throw err;console.log(result.affectedRows + " record(s) updated");
             });
-            db.query("select ULSD from elan_cust_prod_summary where name='"+store_name+"' and sheduled_or_transit='"+bol_status_description+"'", function (error, prodresults, fields) {
+            db.query("select ULSD from elan_cust_prod_summary where name='"+store_name+"' and sheduled_or_transit='Scheduled'", function (error, prodresults, fields) {
               if (error) throw error;
               updULSD=prodresults[0].ULSD;
-              console.log("...insdie the before update function..."+updULSD);
               if(updULSD >= (productresults[0].ULSDGrossGallons)){
                 updULSD = updULSD - productresults[0].ULSDGrossGallons;
-                var sql = "UPDATE elan_cust_prod_summary SET ULSD = "+updULSD+" WHERE name = '"+store_name+"' and sheduled_or_transit='"+bol_status_description+"'";
-                db.query(sql, function (err, result) {
-                if (err) throw err;
-                  //console.log(result.affectedRows + "update......");
-                });
+                var sql = "UPDATE elan_cust_prod_summary SET ULSD = "+updULSD+" WHERE name = '"+store_name+"' and sheduled_or_transit='Scheduled'";
+                db.query(sql, function (err, result) {if (err) throw err;});
               }
             });
+            db.query("select ULSD from elan_cust_prod_summary where name='"+store_name+"' and sheduled_or_transit='Transit'", function (error, prodresults, fields) {
+              if (error) throw error;
+              updULSD=prodresults[0].ULSD;
+              if(updULSD >= (productresults[0].ULSDGrossGallons)){
+                updULSD = updULSD - productresults[0].ULSDGrossGallons;
+                var sql = "UPDATE elan_cust_prod_summary SET ULSD = "+updULSD+" WHERE name = '"+store_name+"' and sheduled_or_transit='Transit'";
+                db.query(sql, function (err, result) {if (err) throw err;});
+              }
+            });            
             db.query("select ULSD from elan_cust_prod_summary where name='"+store_name+"' and sheduled_or_transit='Order'", function (error, prodresults, fields) {
               if (error) throw error;
               updULSD=prodresults[0].ULSD;
               if(updULSD=="NaN"){updULSD=0;}
               console.log("...insdie the before update function..."+updULSD);
                 updULSD = updULSD + productresults[0].ULSDGrossGallons;
-                var sql = "UPDATE elan_cust_prod_summary SET ULSD = "+updULSD+", cust_or_dealer='"+customer+"' WHERE name = '"+store_name+"' and sheduled_or_transit='Order'";
-                db.query(sql, function (err, result) {
-                if (err) throw err;
-                  //console.log(result.affectedRows + "update......");
-                });
+                var sql = "UPDATE elan_cust_prod_summary SET ULSD = "+updULSD+" WHERE name = '"+store_name+"' and sheduled_or_transit='Order'";
+                db.query(sql, function (err, result) {if (err) throw err;});
             });
           }
           if(productresults[0].B20Biodiesel=='B20 Biodiesel' && (productresults[0].B20GrossGallons >0)){
@@ -324,28 +349,32 @@ app.post('/getDashboardValues', function (req, res) {
             var sql = "INSERT INTO orders_prod_price_map(delivery_number,product_name,store_name,price_per_gallons,gallons,delivery_date,sheduled_or_transit) VALUES ('"+getdeliveryno[0].delivery_number+"','"+productresults[0].B20Biodiesel+"','"+store_name+"','"+price_per_gallons+"',"+productresults[0].B20GrossGallons+",'"+getdeliveryno[0].delivery_date+"','"+bol_status_description+"')";
             db.query(sql, function (err, result) {if (err) throw err;console.log(result.affectedRows + " record(s) updated");
             });
-            db.query("select B20 from elan_cust_prod_summary where name='"+store_name+"' and sheduled_or_transit='"+bol_status_description+"'", function (error, prodresults, fields) {
+            db.query("select B20 from elan_cust_prod_summary where name='"+store_name+"' and sheduled_or_transit='Scheduled'", function (error, prodresults, fields) {
               if (error) throw error;
                updB20=prodresults[0].B20;
                if(updB20 >= (productresults[0].B20GrossGallons)){
                   updB20 = updB20 - productresults[0].B20GrossGallons;
-                  var sql = "UPDATE elan_cust_prod_summary SET B20 = "+updB20+", cust_or_dealer='"+customer+"' WHERE name = '"+store_name+"' and sheduled_or_transit='"+bol_status_description+"'";
-                  db.query(sql, function (err, result) {
-                  if (err) throw err;
-                    //console.log(result.affectedRows + "update......");
-                  });
+                  var sql = "UPDATE elan_cust_prod_summary SET B20 = "+updB20+" WHERE name = '"+store_name+"' and sheduled_or_transit='Scheduled'";
+                  db.query(sql, function (err, result) {if (err) throw err;});
                 }
             });
+            db.query("select B20 from elan_cust_prod_summary where name='"+store_name+"' and sheduled_or_transit='Transit'", function (error, prodresults, fields) {
+              if (error) throw error;
+               updB20=prodresults[0].B20;
+               if(updB20 >= (productresults[0].B20GrossGallons)){
+                  updB20 = updB20 - productresults[0].B20GrossGallons;
+                  var sql = "UPDATE elan_cust_prod_summary SET B20 = "+updB20+" WHERE name = '"+store_name+"' and sheduled_or_transit='Transit'";
+                  db.query(sql, function (err, result) {if (err) throw err;});
+                }
+            });
+
             db.query("select B20 from elan_cust_prod_summary where name='"+store_name+"' and sheduled_or_transit='Order'", function (error, prodresults, fields) {
               if (error) throw error;
                updB20=prodresults[0].B20;
                if(updB20=="NaN"){updB20=0;}
-               updB20 = updB20 - productresults[0].B20GrossGallons;
-                  var sql = "UPDATE elan_cust_prod_summary SET B20 = "+updB20+" WHERE name = '"+store_name+"' and sheduled_or_transit='Order'";
-                  db.query(sql, function (err, result) {
-                  if (err) throw err;
-                    //console.log(result.affectedRows + "update......");
-                  });
+               updB20 = updB20 + productresults[0].B20GrossGallons;
+               var sql = "UPDATE elan_cust_prod_summary SET B20 = "+updB20+" WHERE name = '"+store_name+"' and sheduled_or_transit='Order'";
+               db.query(sql, function (err, result) {if (err) throw err;});
             });
           }
           console.log("....before start order placement...");
@@ -374,7 +403,7 @@ app.post('/getDashboardValues', function (req, res) {
                  if (err) throw err;
                   console.log("order placement record inserted");
                   if (i==totaldeliverynos){
-                    var sql = "UPDATE store_inventory SET bol_status_description = 'Completed' WHERE delivery_number = '"+getdeliveryno[0].delivery_number+"'";   
+                    var sql = "UPDATE store_inventory SET bol_status_description = 'Completed' WHERE  dealer='"+store_name+"' and delivery_number = '"+getdeliveryno[0].delivery_number+"'";   
                     db.query(sql, function (err, result) {
                       if (err) throw err;
                       console.log(result.affectedRows + " record(s) updated");
