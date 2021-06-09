@@ -219,36 +219,46 @@ app.post('/getDashboardValues', function (req, res) {
   let corporation_name="";customer_address="";customer_email="";customer_phone="";customer_first_name="";customer_last_name="";
   let user_id=req.body.useremail;delivery_number="";bol_status_description="";
   let i;delivery_date="";bill_of_lading_id="";customer="";location_id="";terminal_name="";order_id="123456";
-  console.log("..storename..."+req.body.storeid);
-  console.log("..user_id..."+user_id);
+  //console.log("..storename..."+req.body.storeid);
+  //console.log("..user_id..."+user_id);
   let completed="N";
   let totaldeliverynos=0;
+  var insertcount=0;
+  var totalcount =0;
   totaldeliverynos=req.body.checkedItems.length;
-  console.log(" total delivery nos + "+totaldeliverynos);
   for (i = 0; i < req.body.checkedItems.length; i++) {
     console.log(" output of checked items + "+req.body.checkedItems[i]);
     if (req.body.checkedItems[i]!=null){
-
-
-      console.log(req.body.checkedItems[i]);
+      totalcount = totalcount +1;
+    }
+  }
+  for (i = 0; i < req.body.checkedItems.length; i++) {
+    console.log(" output of checked items + "+req.body.checkedItems[i]);
+    if (req.body.checkedItems[i]!=null){
+      //console.log(req.body.checkedItems[i]);
       db.query("select delivery_number,DATE_FORMAT(delivery_date,'%Y-%m-%d %H:%i:%s') AS 'delivery_date' from store_inventory where id='"+req.body.checkedItems[i]+"'", function (error, getdeliveryno, fields) {
         if (error) throw error;
         console.log(getdeliveryno[0].delivery_number + " delivery numbers");
-        console.log(" getelsjlj delivery_date + "+ getdeliveryno[0].delivery_date);
+        //console.log(" getelsjlj delivery_date + "+ getdeliveryno[0].delivery_date);
+        var sql = "UPDATE store_inventory SET bol_status_description = 'Completed' WHERE  dealer='"+store_name+"' and delivery_number = '"+getdeliveryno[0].delivery_number+"'";   
+        db.query(sql, function (err, result) {
+          if (err) throw err;
+        });
+
         db.query("SET SESSION sql_mode=''");
         db.query("select id,bill_of_lading_id,delivery_date,bol_status_description,max(case when (product_name='UNL 87 RFG ETH 10%') then product_name else NULL end) as 'UNL87RFG',max(case when (product_name='UNL 87 RFG ETH 10%') then gross_gallons else NULL end) as 'UNL87GrossGallons',max(case when (product_name='PREM 93 RFG ETH 10%') then product_name else NULL end) as 'PREM93RFG',max(case when (product_name='PREM 93 RFG ETH 10%') then gross_gallons else NULL end) as 'PREM93GrossGallons',max(case when (product_name='ULSD CLEAR TXLED') then product_name else NULL end) as 'ULSDCLEARTXLED',max(case when (product_name='ULSD CLEAR TXLED') then gross_gallons else NULL end) as 'ULSDGrossGallons', max(case when (product_name='B20 Biodiesel') then product_name else NULL end) as 'B20Biodiesel',max(case when (product_name='B20 Biodiesel') then gross_gallons else NULL end) as 'B20GrossGallons' from store_inventory where dealer='"+store_name+"' and delivery_number='"+getdeliveryno[0].delivery_number+"'", function (error, productresults, fields) {
           if (error) throw error;
-          console.log("get delivery_number...."+getdeliveryno[0].delivery_number);
+          //console.log("get delivery_number...."+getdeliveryno[0].delivery_number);
           bol_status_description=productresults[0].bol_status_description;
 
           if(productresults[0].UNL87RFG=='UNL 87 RFG ETH 10%' && (productresults[0].UNL87GrossGallons >0)){
             price_per_gallons="1.75";
-            console.log("....get delivery date for prod price..."+getdeliveryno[0].delivery_date);
+            //console.log("....get delivery date for prod price..."+getdeliveryno[0].delivery_date);
             var sql = "INSERT INTO orders_prod_price_map(delivery_number,product_name,store_name,price_per_gallons,gallons,delivery_date,sheduled_or_transit) VALUES ('"+getdeliveryno[0].delivery_number+"','"+productresults[0].UNL87RFG+"','"+store_name+"','"+price_per_gallons+"',"+productresults[0].UNL87GrossGallons+",'"+getdeliveryno[0].delivery_date+"','"+bol_status_description+"')";
             db.query(sql, function (err, result) {if (err) throw err;console.log(result.affectedRows + " record(s) updated");
             });
-            console.log("...before scheduled..and store name....."+store_name);
-            console.log("...bol_status_description....."+bol_status_description);
+            //console.log("...before scheduled..and store name....."+store_name);
+            //console.log("...bol_status_description....."+bol_status_description);
               db.query("select RFG87E10 from elan_cust_prod_summary where name='"+store_name+"' and sheduled_or_transit='Scheduled'", function (error, prodresults, fields) {
                 if (error) throw error;
                 updRFG87E101=prodresults[0].RFG87E10;
@@ -338,7 +348,7 @@ app.post('/getDashboardValues', function (req, res) {
               if (error) throw error;
               updULSD=prodresults[0].ULSD;
               if(updULSD=="NaN"){updULSD=0;}
-              console.log("...insdie the before update function..."+updULSD);
+              //console.log("...insdie the before update function..."+updULSD);
                 updULSD = updULSD + productresults[0].ULSDGrossGallons;
                 var sql = "UPDATE elan_cust_prod_summary SET ULSD = "+updULSD+" WHERE name = '"+store_name+"' and sheduled_or_transit='Order'";
                 db.query(sql, function (err, result) {if (err) throw err;});
@@ -377,7 +387,7 @@ app.post('/getDashboardValues', function (req, res) {
                db.query(sql, function (err, result) {if (err) throw err;});
             });
           }
-          console.log("....before start order placement...");
+          //console.log("....before start order placement...");
           db.query("select delivery_date,bill_of_lading_id,customer,location_id,terminal_name from store_inventory where delivery_number='"+getdeliveryno[0].delivery_number+"'", function (error, invresults, fields) {
             if (error) throw error;
             bill_of_lading_id=invresults[0].bill_of_lading_id;
@@ -386,7 +396,7 @@ app.post('/getDashboardValues', function (req, res) {
             db.query("select corporation_name from store where store_name='"+store_name+"'", function (error, storeresults, fields) {
               if (error) throw error;
               corporation_name=storeresults[0].corporation_name;
-              console.log("...corporation_name..."+corporation_name);
+              //console.log("...corporation_name..."+corporation_name);
               db.query("select customer_first_name,customer_last_name,customer_address_1,customer_email,customer_phone_1 from customer where corporation_name='"+corporation_name+"'", function (error, customeresults, fields) {
                 if (error) throw error;
               customer_first_name=customeresults[0].customer_first_name;       
@@ -394,26 +404,22 @@ app.post('/getDashboardValues', function (req, res) {
               customer_address=customeresults[0].customer_address_1;       
               customer_email=customeresults[0].customer_email;
               customer_phone=customeresults[0].customer_phone_1;
-              console.log("..customer_phone..."+customer_phone);
+              //console.log("..customer_phone..."+customer_phone);
               order_id="or_"+moment(Date.now()).format('YYYYMMDD')+"_"+getdeliveryno[0].delivery_number;
-              console.log("..order_id..."+order_id);
-              console.log("....before order placement...");
+              //console.log("..order_id..."+order_id);
+              //console.log("....before order placement...");
               var sql = "INSERT INTO orders_placement(delivery_number,bill_of_lading_id,customer,location_id,terminal_name,user_id,order_id,store_name,delivery_amount,customer_address,customer_email,customer_phone,delivery_date,customer_first_name,customer_last_name) VALUES ('"+getdeliveryno[0].delivery_number+"','"+bill_of_lading_id+"','"+customer+"','"+location_id+"','"+terminal_name+"','"+user_id+"','"+order_id+"','"+store_name+"',"+delivery_amount+",'"+customer_address+"','"+customer_email+"','"+customer_phone+"','"+ getdeliveryno[0].delivery_date+"','"+customer_first_name+"','"+customer_last_name+"')";
               db.query(sql, function (err, result) {
                  if (err) throw err;
-                  console.log("order placement record inserted");
-                  if (i==totaldeliverynos){
-                    var sql = "UPDATE store_inventory SET bol_status_description = 'Completed' WHERE  dealer='"+store_name+"' and delivery_number = '"+getdeliveryno[0].delivery_number+"'";   
-                    db.query(sql, function (err, result) {
-                      if (err) throw err;
-                      console.log(result.affectedRows + " record(s) updated");
-                      console.log("....success............................");
+                 insertcount = insertcount + 1;
+                 console.log("....total count......."+totalcount);
+                  console.log("....insertcount......."+insertcount);
+                  if (totalcount==insertcount){
                       res.send({ success: "yes" });
-                    });
                   } 
                  });
               });
-              console.log("....after order placement...");
+              //console.log("....after order placement...");
             });
 
           });
@@ -422,6 +428,7 @@ app.post('/getDashboardValues', function (req, res) {
      }
   }
 });
+
 
 app.get('/storeusers', function (req, res) {
   console.log(req.checkbox);
