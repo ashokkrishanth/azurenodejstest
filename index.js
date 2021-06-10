@@ -82,25 +82,21 @@ app.post('/getordersummary', function (req, res) {
   var storename = req.body.storename;
   var RFG87E10=0; var RFG93E10=0;var ULSD=0;var B5=0;var B20=0;var DEF=0; var total=0;
   var totRFG87E10=0; var totRFG93E10=0;var totULSD=0;var totB5=0;var totB20=0;var totDEF=0;
-  console.log('..Inside get order summary');
-  console.log('..store name....'+storename);
+  //console.log('..Inside get order summary');
+  //console.log('..store name....'+storename);
   db.query("SET SESSION sql_mode=''");
   db.query("select id,delivery_number,bill_of_lading_id,max(case when (product_name='UNL 87 RFG ETH 10%') then product_name else NULL end) as 'RFG87E10',max(case when (product_name='UNL 87 RFG ETH 10%') then gross_gallons else NULL end) as 'UNL87GrossGallons',max(case when (product_name='PREM 93 RFG ETH 10%') then product_name else NULL end) as 'RFG93E10',max(case when (product_name='PREM 93 RFG ETH 10%') then gross_gallons else NULL end) as 'PREM93GrossGallons',max(case when (product_name='ULSD CLEAR TXLED') then product_name else NULL end) as 'ULSD',max(case when (product_name='ULSD CLEAR TXLED') then gross_gallons else NULL end) as 'ULSDGrossGallons', max(case when (product_name='B20 Biodiesel') then product_name else NULL end) as 'B20',max(case when (product_name='B20 Biodiesel') then gross_gallons else NULL end) as 'B20GrossGallons' from store_inventory where dealer='"+storename+"' and bol_status_description='Scheduled'  group by delivery_number order by delivery_number", function (error, schresults, fields) {
     if (error) throw error;
     
     db.query("select store_name,RFG87E10,RFG93E10,ULSD,B5,B20,DEF from price where store_name='"+storename+"'", function (error, priceresults, fields) {
       if (error) throw error;
-      console.log("....test.....");
-      console.log("....ashok....."+priceresults[0].RFG87E10);
-      console.log("....test.1....");
       if (priceresults[0].RFG87E10=='undefined'){
         RFG87E10=0;} else {RFG87E10=priceresults[0].RFG87E10; }
       
       RFG93E10=priceresults[0].RFG93E10; ULSD=priceresults[0].ULSD;
       B5=priceresults[0].B5; B20=priceresults[0].B20; DEF=priceresults[0].DEF;
-      console.log(schresults);
+      //console.log(schresults);
       var length = Object.keys(schresults).length;
-      console.log("..length before..."+length);
       for (var i = 0; i < length; i++) 
       {
           total = (RFG87E10 * schresults[i].UNL87GrossGallons) + (RFG93E10 * schresults[i].PREM93GrossGallons) + (ULSD * schresults[i].ULSDGrossGallons) + (B20 * schresults[i].B20GrossGallons);
@@ -108,24 +104,17 @@ app.post('/getordersummary', function (req, res) {
       }
     })
     return_data.availInventories = schresults;
-    console.log("..ashok 1..");
     db.query("select * from price where store_name='"+storename+"'", function (error, results, fields) {
       if (error) throw error;
       return_data.prices = results;
     });
-    console.log("..ashok 2..");
     db.query("SET SESSION sql_mode=''");
     db.query("select id,delivery_number,bill_of_lading_id,max(case when (product_name='UNL 87 RFG ETH 10%') then product_name else NULL end) as 'UNL 87 RFG',max(case when (product_name='UNL 87 RFG ETH 10%') then gross_gallons else NULL end) as 'UNL87GrossGallons',max(case when (product_name='PREM 93 RFG ETH 10%') then product_name else NULL end) as 'PREM 93 RFG',max(case when (product_name='PREM 93 RFG ETH 10%') then gross_gallons else NULL end) as 'PREM93GrossGallons',max(case when (product_name='ULSD CLEAR TXLED') then product_name else NULL end) as 'ULSD CLEAR TXLED',max(case when (product_name='ULSD CLEAR TXLED') then gross_gallons else NULL end) as 'ULSDGrossGallons', max(case when (product_name='B20 Biodiesel') then product_name else NULL end) as 'B20 Biodiesel',max(case when (product_name='B20 Biodiesel') then gross_gallons else NULL end) as 'B20GrossGallons' from store_inventory where dealer='"+storename+"' and bol_status_description='Out for Delivery'  group by delivery_number order by delivery_number", function (error, intransitresults, fields) {
       if (error) throw error;
-
-      console.log("..ashok 4..");
-      console.log("..ashok 4..");
       return_data.intransit = intransitresults;
-      console.log("..output.");
-      console.log(return_data);
+      //console.log(return_data);
       res.send(JSON.stringify(return_data));
     });
-    console.log("..ashok 3..");
   });
 });
 
@@ -145,7 +134,7 @@ app.post('/getDashboardValues', function (req, res) {
   var ullageoutput = []
   var ullagearray = [];
   var ullagetest = {}
-  console.log("..storename.............."+storename);
+  //console.log("..storename.............."+storename);
   db.query("select * from elan_cust_prod_summary where name='"+storename+"' and sheduled_or_transit='Scheduled'", function (error, results, fields) {
     invRFG87E10 = results[0].RFG87E10, invRFG93E10 = results[0].RFG93E10, invULSD = results[0].ULSD, invB5 = results[0].B5, invDEF = results[0].DEF,invB20 = results[0].B20;
     if (error) throw error;
@@ -428,7 +417,6 @@ app.post('/getDashboardValues', function (req, res) {
      }
   }
 });
-
 
 app.get('/storeusers', function (req, res) {
   console.log(req.checkbox);
