@@ -133,22 +133,41 @@ app.post('/getDashboardValues', function (req, res) {
   var tankproduct="",tanksize=0, tankconnection=false;
   var ullageoutput = []
   var ullagearray = [];
+  var custinvarray = [];custinvarrayoutput = [];
+  var elaninvarray = [];elaninvarrayoutput = [];
+  var elantransitarray = [];elantransitarrayoutput = [];
   var ullagetest = {}
-  //console.log("..storename.............."+storename);
+  console.log("..storename.............."+storename);
   db.query("select * from elan_cust_prod_summary where name='"+storename+"' and sheduled_or_transit='Scheduled'", function (error, results, fields) {
-    invRFG87E10 = results[0].RFG87E10, invRFG93E10 = results[0].RFG93E10, invULSD = results[0].ULSD, invB5 = results[0].B5, invDEF = results[0].DEF,invB20 = results[0].B20;
+      elaninvarray.push(results[0].RFG87E10);
+      elaninvarray.push(results[0].RFG93E10);
+      elaninvarray.push(results[0].ULSD);
+      elaninvarray.push(results[0].B5);
+      elaninvarray.push(results[0].DEF);
+      elaninvarray.push(results[0].B20);
+      console.log(elaninvarray);
     if (error) throw error;
-    return_data.scheduled = results;
+
     db.query("select * from elan_cust_prod_summary where name='"+storename+"' and sheduled_or_transit='Transit'", function (error, results, fields) {
+      elantransitarray.push(results[0].RFG87E10);
+      elantransitarray.push(results[0].RFG93E10);
+      elantransitarray.push(results[0].ULSD);
+      elantransitarray.push(results[0].B5);
+      elantransitarray.push(results[0].DEF);
+      elantransitarray.push(results[0].B20);
       if (error) throw error;
-      return_data.transit = results;
     });
     
     db.query("select * from elan_cust_prod_summary where name='"+storename+"' and sheduled_or_transit='Order'", function (error, results, fields) {
       if (error) throw error;
-      custRFG87E10 = results[0].RFG87E10, custRFG93E10 = results[0].RFG93E10, custULSD = results[0].ULSD, custB5 = results[0].B5, custDEF = results[0].DEF,custB20 = results[0].B20;
+      //custRFG87E10 = results[0].RFG87E10, custRFG93E10 = results[0].RFG93E10, custULSD = results[0].ULSD, custB5 = results[0].B5, custDEF = results[0].DEF,custB20 = results[0].B20;
+      custinvarray.push(results[0].RFG87E10);
+      custinvarray.push(results[0].RFG93E10);
+      custinvarray.push(results[0].ULSD);
+      custinvarray.push(results[0].B5);
+      custinvarray.push(results[0].DEF);
+      custinvarray.push(results[0].B20);
       return_data.custinv = results;
-      
     });
     db.query("SET SESSION sql_mode=''");
     db.query("select sum(RFG87E10) as RFG87E10,sum(RFG93E10) as RFG93E10,sum(ULSD) as ULSD,sum(B5) as B5,sum(B20) as B20,sum(DEF) as DEF from elan_cust_prod_summary where name='"+storename+"'", function (error, summaryresults, fields) {
@@ -169,25 +188,82 @@ app.post('/getDashboardValues', function (req, res) {
       if (error) throw error;
       var tankconn = false;
       var length = Object.keys(results).length;
-      var total=0;
+      var total=0;k=-1;
       for (var i = 0; i < length; i++) 
       {
+        k = k + 1;
         if(results[i].tank_connection=true && i==1){
           tankconn=true;
           continue;
         }
-         if (tankconn==true){
+        if(results[k].tank_product=='RFG87E10'){elaninvarrayoutput.push(elaninvarray[0]); }
+        if(results[k].tank_product=='RFG93E10'){elaninvarrayoutput.push(elaninvarray[1]); }
+        if(results[k].tank_product=='ULSD'){elaninvarrayoutput.push(elaninvarray[2]); }
+        if(results[k].tank_product=='B5'){elaninvarrayoutput.push(elaninvarray[3]); }
+        if(results[k].tank_product=='DEF'){elaninvarrayoutput.push(elaninvarray[4]); }
+        if(results[k].tank_product=='B20'){elaninvarrayoutput.push(elaninvarray[5]); }
+
+        if(results[k].tank_product=='RFG87E10'){elantransitarrayoutput.push(elantransitarray[0]); }
+        if(results[k].tank_product=='RFG93E10'){elantransitarrayoutput.push(elantransitarray[1]); }
+        if(results[k].tank_product=='ULSD'){elantransitarrayoutput.push(elantransitarray[2]); }
+        if(results[k].tank_product=='B5'){elantransitarrayoutput.push(elantransitarray[3]); }
+        if(results[k].tank_product=='DEF'){elantransitarrayoutput.push(elantransitarray[4]); }
+        if(results[k].tank_product=='B20'){elantransitarrayoutput.push(elantransitarray[5]); }
+
+        if(results[k].tank_product=='RFG87E10'){custinvarrayoutput.push(custinvarray[0]); }
+        if(results[k].tank_product=='RFG93E10'){custinvarrayoutput.push(custinvarray[1]); }
+        if(results[k].tank_product=='ULSD'){custinvarrayoutput.push(custinvarray[2]); }
+        if(results[k].tank_product=='B5'){custinvarrayoutput.push(custinvarray[3]); }
+        if(results[k].tank_product=='DEF'){custinvarrayoutput.push(custinvarray[4]); }
+        if(results[k].tank_product=='B20'){custinvarrayoutput.push(custinvarray[5]); }
+
+        if(results[k].tank_product=='RFG87E10'){
+          total = results[k].tank_size - (ullagearray[0]);
+          ullageoutput.push(total);
+        }
+        if(results[k].tank_product=='RFG93E10'){
+          total = results[k].tank_size - (ullagearray[1]);
+          ullageoutput.push(total);
+        }
+        if(results[k].tank_product=='ULSD'){
+          total = results[k].tank_size - (ullagearray[2]);
+          ullageoutput.push(total);
+        }
+        if(results[k].tank_product=='B5'){
+          total = results[k].tank_size - (ullagearray[3]);
+          ullageoutput.push(total);
+        }
+        if(results[k].tank_product=='B20'){
+          total = results[k].tank_size - (ullagearray[4]);
+          ullageoutput.push(total);
+        }
+        if(results[k].tank_product=='DEF'){
+          total = results[k].tank_size - (ullagearray[5]);
+          ullageoutput.push(total);
+        }
+ 
+        
+        //console.log("..inventory array values...."+elantransitarray[i]);
+     /*    if (tankconn==true){
+          tankconn==false;
+          console.log("..ullage array conn values ...."+ullagearray[i-1]);
            total = results[i].tank_size - (ullagearray[i-1]);
            ullagetest[i] = total;
          }else {
+          console.log("..ullage array values ...."+ullagearray[i]);
            ullagetest[i] = total;
            total = results[i].tank_size - (ullagearray[i]);
-         }
-         ullageoutput.push(total);
+         } */
+         //ullageoutput.push(total);
       };
       tankproduct= results[0].tank_product, tankconnection= results[0].tank_connection, tanksize=results[0].tank_size
       //console.log(results);
       //console.log(".....output...."+invRFG87E10,transitRFG87E10,custRFG87E10,tankproduct,tankconnection,tanksize)
+      
+      
+      return_data.custinvarray = custinvarrayoutput;
+      return_data.elantransitarray = elantransitarrayoutput;
+      return_data.elaninvarray = elaninvarrayoutput;
       return_data.ullage = ullageoutput;
       var deletedItem = results.splice(1,1);
        return_data.tanks = results;
