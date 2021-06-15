@@ -81,6 +81,7 @@ app.post('/getordersummary', function (req, res) {
   var return_data ={};
   var storename = req.body.storename;
   var ullageoutput = []
+  var custorserialno = [];
   var ullagearray = [];
   var RFG87E10=0; var RFG93E10=0;var ULSD=0;var B5=0;var B20=0;var DEF=0; var total=0;
   var totRFG87E10=0; var totRFG93E10=0;var totULSD=0;var totB5=0;var totB20=0;var totDEF=0;
@@ -140,6 +141,17 @@ app.post('/getordersummary', function (req, res) {
           ullagearray.push(summDEF);
           // var summRFG87E10=0, summRFG93E10=0, summULSD=0, summB5=0, summB20=0, summDEF=0;
 
+          var date_format = new Date();
+          var shortYear = date_format.getFullYear();
+          var twoDigitYear = shortYear.toString().substr(-2);
+          var getdate =  "CO"+twoDigitYear+''+('0' + (date_format.getMonth()+1)).slice(-2)+''+('0' + (date_format.getDate())).slice(-2)
+
+          console.log("....date value....."+getdate)
+          db.query("select count(*) as count from orders_placement where store_name='"+storename+"' and substring(delivery_number,1,8)='"+getdate+"' ", function (error, custorderresults, fields) {
+            if (error) throw error;
+            custorserialno.push(custorderresults[0].count)
+          }) 
+
           db.query("select * from store_tanks where store_name='"+storename+"'", function (error, results, fields) {
             if (error) throw error;
             var tankconn = false;
@@ -178,6 +190,8 @@ app.post('/getordersummary', function (req, res) {
               }
             };
             return_data.ullage = ullageoutput;
+
+            return_data.cuorderserialno = custorserialno;
             res.send(JSON.stringify(return_data));
           })    
         });
