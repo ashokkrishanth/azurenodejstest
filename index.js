@@ -829,7 +829,7 @@ app.post('/updateordersummary', function (req, res) {
             if (overalltotalarray[0]==insertcount){
               console.log("....overalltotalarray[0]......"+overalltotalarray[0]);
               console.log("....insertcount......."+insertcount);
-              emailSend(store_name, deliverynumberarray)
+              //emailSend(store_name, deliverynumberarray)
               res.send({ success: "yes" });
             } 
           });
