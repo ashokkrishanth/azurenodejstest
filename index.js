@@ -303,7 +303,6 @@ app.post('/getordersummary', function (req, res) {
   });
 });
 
-
 app.post('/getDashboardValues', function (req, res) {
   console.log("....inside the getDashboardValues ");
   //console.log(req);
@@ -371,7 +370,7 @@ app.post('/getDashboardValues', function (req, res) {
           return_data.custominv = results;
         });
         db.query("SET SESSION sql_mode=''");
-        db.query("select sum(RFG87E10) as RFG87E10,sum(RFG93E10) as RFG93E10,sum(ULSD) as ULSD,sum(B5) as B5,sum(B20) as B20,sum(DEF) as DEF from elan_cust_prod_summary where name='"+storename+"'", function (error, summaryresults, fields) {
+        db.query("select sum(RFG87E10) as RFG87E10,sum(RFG93E10) as RFG93E10,sum(ULSD) as ULSD,sum(B5) as B5,sum(B20) as B20,sum(DEF) as DEF from elan_cust_prod_summary where name='"+storename+"' and sheduled_or_transit!='Custom'", function (error, summaryresults, fields) {
           if (error) throw error;
           summRFG87E10= summaryresults[0].RFG87E10,summRFG93E10= summaryresults[0].RFG93E10,
           summULSD= summaryresults[0].ULSD,summB5= summaryresults[0].B5,
@@ -404,8 +403,14 @@ app.post('/getDashboardValues', function (req, res) {
             if(groupresults[i].tank_product=='RFG87E10'){
               elaninvarrayoutput.push(elaninvarray[0]); 
               elantransitarrayoutput.push(elantransitarray[0]);
+              //console.log("....custom inventory values....."+custominvarray[0]);
+              //console.log("....cust inventory values....."+custinvarray[0]);
+              //console.log(".... ullagearray values....."+ullagearray[0]);
+              //console.log("....subtract values....."+(groupresults[i].invreadings - ullagearray[0]));
               custominvarrayoutput.push(custominvarray[0]); 
-              custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[0]) + custominvarray[0]);
+              custinvarrayoutput.push(((groupresults[i].invreadings - ullagearray[0]) + custinvarray[0] + custominvarray[0]));
+
+              console.log("....cust array values....."+custinvarrayoutput[0]);
               total = groupresults[i].tanksize - (elaninvarrayoutput[0]+elantransitarrayoutput[0]+custinvarrayoutput[0]);
               ullageoutput.push(total);
             }
@@ -413,7 +418,7 @@ app.post('/getDashboardValues', function (req, res) {
               elaninvarrayoutput.push(elaninvarray[1]); 
               elantransitarrayoutput.push(elantransitarray[1]);
               custominvarrayoutput.push(custominvarray[1]); 
-              custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[1]) + custominvarray[1]);
+              custinvarrayoutput.push(((groupresults[i].invreadings - ullagearray[1]) + custinvarray[1] + custominvarray[1]));
               total = groupresults[i].tanksize - (elaninvarrayoutput[1]+elantransitarrayoutput[1]+custinvarrayoutput[1]);
               ullageoutput.push(total);
             }
@@ -421,7 +426,7 @@ app.post('/getDashboardValues', function (req, res) {
               elaninvarrayoutput.push(elaninvarray[2]); 
               elantransitarrayoutput.push(elantransitarray[2]);
               custominvarrayoutput.push(custominvarray[2]); 
-              custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[2]) + custominvarray[2]);
+              custinvarrayoutput.push(((groupresults[i].invreadings - ullagearray[2]) + custinvarray[2] + custominvarray[2]));
               total = groupresults[i].tanksize - (elaninvarrayoutput[2]+elantransitarrayoutput[2]+custinvarrayoutput[2]);
               ullageoutput.push(total);
             }
@@ -429,7 +434,7 @@ app.post('/getDashboardValues', function (req, res) {
               elaninvarrayoutput.push(elaninvarray[3]); 
               elantransitarrayoutput.push(elantransitarray[3]);
               custominvarrayoutput.push(custominvarray[3]);
-              custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[3]) + custominvarray[3]);
+              custinvarrayoutput.push(((groupresults[i].invreadings - ullagearray[3]) + custinvarray[3] + custominvarray[3]));
               total = groupresults[i].tanksize - (elaninvarrayoutput[3]+elantransitarrayoutput[3]+custinvarrayoutput[3]);
               ullageoutput.push(total);
             }
@@ -437,7 +442,7 @@ app.post('/getDashboardValues', function (req, res) {
               elaninvarrayoutput.push(elaninvarray[4]); 
               elantransitarrayoutput.push(elantransitarray[4]);
               custominvarrayoutput.push(custominvarray[4]);
-              custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[4]) + custominvarray[4]);
+              custinvarrayoutput.push(((groupresults[i].invreadings - ullagearray[4]) + custinvarray[4] + custominvarray[4]));
               total = groupresults[i].tanksize - (elaninvarrayoutput[4]+elantransitarrayoutput[4]+custinvarrayoutput[4]);
               ullageoutput.push(total);
             }
@@ -445,7 +450,7 @@ app.post('/getDashboardValues', function (req, res) {
               elaninvarrayoutput.push(elaninvarray[5]); 
               elantransitarrayoutput.push(elantransitarray[5]);
               custominvarrayoutput.push(custominvarray[5]);
-              custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[5]) + custominvarray[5]);
+              custinvarrayoutput.push(((groupresults[i].invreadings - ullagearray[5]) + custinvarray[5] + custominvarray[5]));
               total = groupresults[i].tanksize - (elaninvarrayoutput[5]+elantransitarrayoutput[5]+custinvarrayoutput[5]);
               ullageoutput.push(total);
             }
