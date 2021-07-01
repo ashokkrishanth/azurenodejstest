@@ -6,8 +6,10 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
+require('dotenv').config();
 const bcrypt = require("bcrypt");
 const moment = require('moment');
+const nodemailer = require('nodemailer');
 
 app.get('/test', (req,res) => res.send('Hello kishanth Ashok Pandian'));
 app.listen(port, () => console.log('Server is running on port'+port));
@@ -75,15 +77,22 @@ app.post("/login", (req, res) => {
      });
   });
 
+
+
 app.post('/getordersummary', function (req, res) {
   //console.log(req);
   var return_data ={};
   var storename = req.body.storename;
-  var ullageoutput = []
+  var ullageoutput = {}
   var custorserialno = [];
   var ullagearray = [];
   var RFG87E10=0; var RFG93E10=0;var ULSD=0;var B5=0;var B20=0;var DEF=0; var total=0;
   var totRFG87E10=0; var totRFG93E10=0;var totULSD=0;var totB5=0;var totB20=0;var totDEF=0;
+  var tanksizegrpoutput = [],tankproductgrpoutput = [];
+  var custinvarray = [];custinvarrayoutput = [];
+  var elaninvarray = [];elaninvarrayoutput = [];
+  var elantransitarray = [];elantransitarrayoutput = [];
+  var custominvarray = [];custominvarrayoutput = [];
   //console.log('..Inside get order summary');
   //console.log('..store name....'+storename);
   db.query("select * from elan_cust_prod_summary where name='"+storename+"'", function (error, results, fields) {
@@ -161,54 +170,132 @@ app.post('/getordersummary', function (req, res) {
           var twoDigitYear = shortYear.toString().substr(-2);
           var getdate =  "CO"+twoDigitYear+''+('0' + (date_format.getMonth()+1)).slice(-2)+''+('0' + (date_format.getDate())).slice(-2)
 
-          //console.log("....date value....."+getdate)
+          console.log("....date value....."+getdate)
           db.query("select count(*) as count from orders_placement where store_name='"+storename+"' and substring(delivery_number,1,8)='"+getdate+"' ", function (error, custorderresults, fields) {
             if (error) throw error;
             custorserialno.push(custorderresults[0].count)
           }) 
 
-          db.query("select * from store_tanks where store_name='"+storename+"'", function (error, results, fields) {
+          db.query("select * from elan_cust_prod_summary where name='"+storename+"' and sheduled_or_transit='Scheduled'", function (error, results, fields) {
+            elaninvarray.push(results[0].RFG87E10);
+            elaninvarray.push(results[0].RFG93E10);
+            elaninvarray.push(results[0].ULSD);
+            elaninvarray.push(results[0].B5);
+            elaninvarray.push(results[0].B20);
+            elaninvarray.push(results[0].DEF);
+            //console.log(elaninvarray);
+          if (error) throw error;
+  
+          db.query("select * from elan_cust_prod_summary where name='"+storename+"' and sheduled_or_transit='Transit'", function (error, results, fields) {
+            elantransitarray.push(results[0].RFG87E10);
+            elantransitarray.push(results[0].RFG93E10);
+            elantransitarray.push(results[0].ULSD);
+            elantransitarray.push(results[0].B5);
+            elantransitarray.push(results[0].B20);
+            elantransitarray.push(results[0].DEF);
             if (error) throw error;
-            var tankconn = false;
-            var length = Object.keys(results).length;
-            var total=0;k=-1;
-            for (var i = 0; i < length; i++) 
+          });
+          
+          db.query("select * from elan_cust_prod_summary where name='"+storename+"' and sheduled_or_transit='Order'", function (error, results, fields) {
+            if (error) throw error;
+            custinvarray.push(results[0].RFG87E10);
+            custinvarray.push(results[0].RFG93E10);
+            custinvarray.push(results[0].ULSD);
+            custinvarray.push(results[0].B5);
+            custinvarray.push(results[0].B20);
+            custinvarray.push(results[0].DEF);
+            return_data.custinv = results;
+          });
+          db.query("select * from elan_cust_prod_summary where name='"+storename+"' and sheduled_or_transit='Custom'", function (error, results, fields) {
+            if (error) throw error;
+            custominvarray.push(results[0].RFG87E10);
+            custominvarray.push(results[0].RFG93E10);
+            custominvarray.push(results[0].ULSD);
+            custominvarray.push(results[0].B5);
+            custominvarray.push(results[0].B20);
+            custominvarray.push(results[0].DEF);
+            return_data.custominv = results;
+          });
+          db.query("SET SESSION sql_mode=''");
+          db.query("select sum(RFG87E10) as RFG87E10,sum(RFG93E10) as RFG93E10,sum(ULSD) as ULSD,sum(B5) as B5,sum(B20) as B20,sum(DEF) as DEF from elan_cust_prod_summary where name='"+storename+"'", function (error, summaryresults, fields) {
+            if (error) throw error;
+            summRFG87E10= summaryresults[0].RFG87E10,summRFG93E10= summaryresults[0].RFG93E10,
+            summULSD= summaryresults[0].ULSD,summB5= summaryresults[0].B5,
+            summB20= summaryresults[0].B20,summDEF= summaryresults[0].DEF
+            ullagearray.push(summRFG87E10), 
+            ullagearray.push(summRFG93E10), 
+            ullagearray.push(summULSD), 
+            ullagearray.push(summB5), 
+            ullagearray.push(summB20), 
+            ullagearray.push(summDEF);
+          });
+          var gocount=0;
+          db.query("SET SESSION sql_mode=''");
+          db.query("select tank_number,tank_product,sum(values_from_inv_readings) as invreadings, sum(tank_size) as tanksize, count(tank_product) as totalproduct FROM store_tanks where store_name='"+storename+"'  group by tank_product having count(tank_product)>0", function (error, groupresults, fields) {
+            if (error) throw error;
+          
+            var grplength = Object.keys(groupresults).length;
+            for (var i = 0; i < grplength; i++) 
             {
-              k = k + 1;
-              if(results[i].tank_connection=true && i==1){
-                tankconn=true;
-                continue;
+              tanksizegrpoutput.push(groupresults[i].tanksize);
+              if(groupresults[i].tank_product=='RFG87E10'){
+                elaninvarrayoutput.push(elaninvarray[0]); 
+                elantransitarrayoutput.push(elantransitarray[0]);
+                custominvarrayoutput.push(custominvarray[0]); 
+                custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[0]) + custominvarray[0]);
+                total = groupresults[i].tanksize - (elaninvarrayoutput[0]+elantransitarrayoutput[0]+custinvarrayoutput[0]);
+                ullageoutput.item1 = total;
               }
-              if(results[k].tank_product=='RFG87E10'){
-                total = results[k].tank_size - (ullagearray[0]);
-                ullageoutput.push(total);
+              if(groupresults[i].tank_product=='RFG93E10'){
+                elaninvarrayoutput.push(elaninvarray[1]); 
+                elantransitarrayoutput.push(elantransitarray[1]);
+                custominvarrayoutput.push(custominvarray[1]); 
+                custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[1]) + custominvarray[1]);
+                total = groupresults[i].tanksize - (elaninvarrayoutput[1]+elantransitarrayoutput[1]+custinvarrayoutput[1]);
+                ullageoutput.item2 = total;
               }
-              if(results[k].tank_product=='RFG93E10'){
-                total = results[k].tank_size - (ullagearray[1]);
-                ullageoutput.push(total);
+              if(groupresults[i].tank_product=='ULSD'){
+                elaninvarrayoutput.push(elaninvarray[2]); 
+                elantransitarrayoutput.push(elantransitarray[2]);
+                custominvarrayoutput.push(custominvarray[2]); 
+                custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[2]) + custominvarray[2]);
+                total = groupresults[i].tanksize - (elaninvarrayoutput[2]+elantransitarrayoutput[2]+custinvarrayoutput[2]);
+                ullageoutput.item3 = total;
               }
-              if(results[k].tank_product=='ULSD'){
-                total = results[k].tank_size - (ullagearray[2]);
-                ullageoutput.push(total);
+              if(groupresults[i].tank_product=='B5'){
+                elaninvarrayoutput.push(elaninvarray[3]); 
+                elantransitarrayoutput.push(elantransitarray[3]);
+                custominvarrayoutput.push(custominvarray[3]);
+                custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[3]) + custominvarray[3]);
+                total = groupresults[i].tanksize - (elaninvarrayoutput[3]+elantransitarrayoutput[3]+custinvarrayoutput[3]);
+                ullageoutput.item4 = total;
               }
-              if(results[k].tank_product=='B5'){
-                total = results[k].tank_size - (ullagearray[3]);
-                ullageoutput.push(total);
+              if(groupresults[i].tank_product=='B20'){
+                elaninvarrayoutput.push(elaninvarray[4]); 
+                elantransitarrayoutput.push(elantransitarray[4]);
+                custominvarrayoutput.push(custominvarray[4]);
+                custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[4]) + custominvarray[4]);
+                total = groupresults[i].tanksize - (elaninvarrayoutput[4]+elantransitarrayoutput[4]+custinvarrayoutput[4]);
+                ullageoutput.item5 = total;
               }
-              if(results[k].tank_product=='B20'){
-                total = results[k].tank_size - (ullagearray[4]);
-                ullageoutput.push(total);
+              if(groupresults[i].tank_product=='DEF'){
+                elaninvarrayoutput.push(elaninvarray[5]); 
+                elantransitarrayoutput.push(elantransitarray[5]);
+                custominvarrayoutput.push(custominvarray[5]);
+                custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[5]) + custominvarray[5]);
+                total = groupresults[i].tanksize - (elaninvarrayoutput[5]+elantransitarrayoutput[5]+custinvarrayoutput[5]);
+                ullageoutput.item6 = total;
               }
-              if(results[k].tank_product=='DEF'){
-                total = results[k].tank_size - (ullagearray[5]);
-                ullageoutput.push(total);
-              }
-            };
+            }
+          });
+  
+          db.query("select * from store_tanks where store_name='"+storename+"'", function (error, results, fields) {
+            if (error) throw error;    
             return_data.ullage = ullageoutput;
-
             return_data.cuorderserialno = custorserialno;
             res.send(JSON.stringify(return_data));
-          })    
+          });
+        }); 
         });
 
       });
@@ -228,7 +315,12 @@ app.post('/getDashboardValues', function (req, res) {
   var custinvarray = [];custinvarrayoutput = [];
   var elaninvarray = [];elaninvarrayoutput = [];
   var elantransitarray = [];elantransitarrayoutput = [];
+  var custominvarray = [];custominvarrayoutput = [];
   //console.log("..storename.............."+storename);
+  db.query("select tank_number,values_from_inv_readings,tank_product FROM store_tanks where store_name='"+storename+"'", function (error, tankresults, fields) {
+    if (error) throw error;
+
+  });
 
   db.query("select * from elan_cust_prod_summary where name='"+storename+"'", function (error, results, fields) {
     var results = Object.keys(results).length;
@@ -268,6 +360,16 @@ app.post('/getDashboardValues', function (req, res) {
           custinvarray.push(results[0].DEF);
           return_data.custinv = results;
         });
+        db.query("select * from elan_cust_prod_summary where name='"+storename+"' and sheduled_or_transit='Custom'", function (error, results, fields) {
+          if (error) throw error;
+          custominvarray.push(results[0].RFG87E10);
+          custominvarray.push(results[0].RFG93E10);
+          custominvarray.push(results[0].ULSD);
+          custominvarray.push(results[0].B5);
+          custominvarray.push(results[0].B20);
+          custominvarray.push(results[0].DEF);
+          return_data.custominv = results;
+        });
         db.query("SET SESSION sql_mode=''");
         db.query("select sum(RFG87E10) as RFG87E10,sum(RFG93E10) as RFG93E10,sum(ULSD) as ULSD,sum(B5) as B5,sum(B20) as B20,sum(DEF) as DEF from elan_cust_prod_summary where name='"+storename+"'", function (error, summaryresults, fields) {
           if (error) throw error;
@@ -283,18 +385,18 @@ app.post('/getDashboardValues', function (req, res) {
         });
         var gocount=0;
         db.query("SET SESSION sql_mode=''");
-        db.query("select tank_number,tank_product, sum(tank_size) as tanksize, count(tank_product) as totalproduct FROM store_tanks where store_name='"+storename+"'  group by tank_product having count(tank_product)>0", function (error, groupresults, fields) {
+        db.query("select tank_number,tank_product,sum(values_from_inv_readings) as invreadings, sum(tank_size) as tanksize, count(tank_product) as totalproduct FROM store_tanks where store_name='"+storename+"'  group by tank_product having count(tank_product)>0", function (error, groupresults, fields) {
           if (error) throw error;
         
           var grplength = Object.keys(groupresults).length;
           for (var i = 0; i < grplength; i++) 
           {
-          if (groupresults[i].totalproduct>1){
+            if (groupresults[i].totalproduct>1){
               gocount = gocount + 1;
-              tanknumbergrpoutput.push(groupresults[i].tank_number + "-GO"+gocount);
+              tanknumbergrpoutput.push("Tank "+groupresults[i].tank_number + "-G0"+gocount);
             }
             else {
-              tanknumbergrpoutput.push(groupresults[i].tank_number);
+              tanknumbergrpoutput.push("Tank "+groupresults[i].tank_number);
             }
             tankproductgrpoutput.push(groupresults[i].tank_product);
 
@@ -302,41 +404,54 @@ app.post('/getDashboardValues', function (req, res) {
             if(groupresults[i].tank_product=='RFG87E10'){
               elaninvarrayoutput.push(elaninvarray[0]); 
               elantransitarrayoutput.push(elantransitarray[0]);
-              custinvarrayoutput.push(custinvarray[0]);
-              total = groupresults[i].tanksize - (ullagearray[0]);ullageoutput.push(total);
+              custominvarrayoutput.push(custominvarray[0]); 
+              custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[0]) + custominvarray[0]);
+              total = groupresults[i].tanksize - (elaninvarrayoutput[0]+elantransitarrayoutput[0]+custinvarrayoutput[0]);
+              ullageoutput.push(total);
             }
             if(groupresults[i].tank_product=='RFG93E10'){
               elaninvarrayoutput.push(elaninvarray[1]); 
               elantransitarrayoutput.push(elantransitarray[1]);
-              custinvarrayoutput.push(custinvarray[1]);
-              total = groupresults[i].tanksize - (ullagearray[1]);ullageoutput.push(total);
+              custominvarrayoutput.push(custominvarray[1]); 
+              custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[1]) + custominvarray[1]);
+              total = groupresults[i].tanksize - (elaninvarrayoutput[1]+elantransitarrayoutput[1]+custinvarrayoutput[1]);
+              ullageoutput.push(total);
             }
             if(groupresults[i].tank_product=='ULSD'){
               elaninvarrayoutput.push(elaninvarray[2]); 
               elantransitarrayoutput.push(elantransitarray[2]);
-              custinvarrayoutput.push(custinvarray[2]);
-              total = groupresults[i].tanksize - (ullagearray[2]);ullageoutput.push(total);
+              custominvarrayoutput.push(custominvarray[2]); 
+              custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[2]) + custominvarray[2]);
+              total = groupresults[i].tanksize - (elaninvarrayoutput[2]+elantransitarrayoutput[2]+custinvarrayoutput[2]);
+              ullageoutput.push(total);
             }
             if(groupresults[i].tank_product=='B5'){
               elaninvarrayoutput.push(elaninvarray[3]); 
               elantransitarrayoutput.push(elantransitarray[3]);
-              custinvarrayoutput.push(custinvarray[3]);
-              total = groupresults[i].tanksize - (ullagearray[3]);ullageoutput.push(total);
+              custominvarrayoutput.push(custominvarray[3]);
+              custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[3]) + custominvarray[3]);
+              total = groupresults[i].tanksize - (elaninvarrayoutput[3]+elantransitarrayoutput[3]+custinvarrayoutput[3]);
+              ullageoutput.push(total);
             }
             if(groupresults[i].tank_product=='B20'){
               elaninvarrayoutput.push(elaninvarray[4]); 
               elantransitarrayoutput.push(elantransitarray[4]);
-              custinvarrayoutput.push(custinvarray[4]);
-              total = groupresults[i].tanksize - (ullagearray[4]);ullageoutput.push(total);
+              custominvarrayoutput.push(custominvarray[4]);
+              custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[4]) + custominvarray[4]);
+              total = groupresults[i].tanksize - (elaninvarrayoutput[4]+elantransitarrayoutput[4]+custinvarrayoutput[4]);
+              ullageoutput.push(total);
             }
             if(groupresults[i].tank_product=='DEF'){
               elaninvarrayoutput.push(elaninvarray[5]); 
               elantransitarrayoutput.push(elantransitarray[5]);
-              custinvarrayoutput.push(custinvarray[5]);
-              total = groupresults[i].tanksize - (ullagearray[5]);ullageoutput.push(total);
+              custominvarrayoutput.push(custominvarray[5]);
+              custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[5]) + custominvarray[5]);
+              total = groupresults[i].tanksize - (elaninvarrayoutput[5]+elantransitarrayoutput[5]+custinvarrayoutput[5]);
+              ullageoutput.push(total);
             }
           }
         });
+
         db.query("select * from store_tanks where store_name='"+storename+"'", function (error, results, fields) {
           if (error) throw error;    
           var tankconn = false;
@@ -365,6 +480,96 @@ app.post('/getDashboardValues', function (req, res) {
     }
   });
  });
+
+
+function emailSend(storename,getDeliveryNoArray){
+  var totalcount =0;
+  var totalarrycount = [];
+  var sendEmail = [];
+  var firstname = [];
+  var lastname = [];
+  var minuscount = 0;
+  totalarrycount[0] = getDeliveryNoArray.length;
+  let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL,
+        pass: process.env.PASSWORD 
+    }
+    
+  });
+  var count=0;
+  var invtotalamount = 0;
+  var intransittotalamount = 0;
+  var custtotalamount = 0;
+  var totalamountarr = [];
+  console.log("...................store name....."+storename);
+  db.query("select store_name,store_first_name,store_last_name,store_email from store where store_name='"+storename+"'", function (error, storeresults, fields) {
+    sendEmail[0]= storeresults[0].store_email;
+    firstname[0] = storeresults[0].store_first_name
+    lastname[0] = storeresults[0].store_last_name
+    console.log(".....store first name......"+firstname[0]);
+    if (error) throw error;
+  });
+  let fullhtml = "";
+  let finalamount = "";
+  let finalhtml = "";
+  let headingHtml = "<table size='small' width='80%'><tr><td  width='30%'></td><td style='text-align:left;font-size: 20px;font-weight:bold;color:black;'>Order Confirmation Notice</td></tr></table>";  
+  let storenameHtml = "<table size='small' width='80%'><tr><td style='text-align:left;font-size: 18px;font-weight:bold;color:#0038a5;'>Store Name:     "+storename +"</td></tr></table>";  
+
+  let inventoryHtml = "<table size='small' width='80%'><tr><td  width='5%'></td><td style='text-align:left;font-size: 14px;font-weight:bold;color:black;text-decoration: underline;'>Available Inventories Purchased</td></tr></table>";  
+  let intransitHtml = "<table size='small' width='80%'><tr><td  width='5%'></td><td style='text-align:left;font-size: 14px;font-weight:bold;color:black;text-decoration: underline;'>In Transit Deliveries Purchased</td></tr></table>"; 
+  let customorderHtml = "<table size='small' width='80%'><tr><td  width='5%'></td><td style='text-align:left;font-size: 14px;font-weight:bold;color:black;text-decoration: underline;'>Custom Orders Purchased</td></tr></table>";  
+  customorderHtml = customorderHtml + "<table size='small' width='80%'><tr><td style='text-align:right;font-weight:bold;color:black;' width='6%'>Delivery #</td><td width='10%' style='text-align:right;font-weight:bold'>Product Name</td><td width='5%' style='text-align:right;font-weight:bold'>Gallons</td><td width='7%' style='text-align:right;font-weight:bold'>Price/Gal</td><td width='7%' style='text-align:right;font-weight:bold'>Delivery $</td></tr>"
+  intransitHtml = intransitHtml + "<table size='small' width='80%'><tr><td style='text-align:right;font-weight:bold;color:black;' width='6%'>Delivery #</td><td width='10%' style='text-align:right;font-weight:bold;color:black;'>Product Name</td><td width='5%' style='text-align:right;font-weight:bold;color:black;'>Gallons</td><td width='7%' style='text-align:right;font-weight:bold;color:black;'>Price/Gal</td><td width='7%' style='text-align:right;font-weight:bold;color:black;'>Delivery $</td></tr>"
+  inventoryHtml = inventoryHtml + "<table size='small' width='80%'><tr><td style='text-align:right;font-weight:bold;color:black;' width='6%'>Delivery #</td><td width='10%' style='text-align:right;font-weight:bold;color:black;'>Product Name</td><td width='5%' style='text-align:right;font-weight:bold;color:black;'>Gallons</td><td width='7%' style='text-align:right;font-weight:bold;color:black;'>Price/Gal</td><td width='7%' style='text-align:right;font-weight:bold;color:black;'>Delivery $</td></tr>"
+ 
+  for (j = 0; j < getDeliveryNoArray.length; j++) {
+    console.log(".....inside for loop......"+getDeliveryNoArray[j]);
+      db.query("select delivery_number,product_name,gallons,price_per_gallons,sheduled_or_transit from orders_prod_price_map where delivery_number='"+getDeliveryNoArray[j]+"' and store_name='"+storename+"'", function (error, prodresults, fields) {
+        var length = Object.keys(prodresults).length;
+        for (var i = 0; i < length; i++) 
+        {
+ 
+          if (prodresults[i].delivery_number.substr(0,2)!='CO' && prodresults[i].sheduled_or_transit=='yes'){
+            invtotalamount = invtotalamount + parseFloat(prodresults[i].gallons * prodresults[i].price_per_gallons);
+            inventoryHtml = inventoryHtml + "<tr><td width='6%' style='text-align:right'>"+prodresults[i].delivery_number+"</td><td width='10%' style='text-align:right'>"+prodresults[i].product_name+"</td><td width='5%' style='text-align:right'>"+(prodresults[i].gallons).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')+"</td><td width='7%' style='text-align:right'>"+prodresults[i].price_per_gallons+"</td><td width='7%' style='text-align:right'>"+(prodresults[i].gallons * prodresults[i].price_per_gallons).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')+"</td></tr>"
+          } 
+          if (prodresults[i].delivery_number.substr(0,2)!='CO' && prodresults[i].sheduled_or_transit=='no'){
+            intransittotalamount = intransittotalamount + parseFloat(prodresults[i].gallons * prodresults[i].price_per_gallons);
+            intransitHtml = intransitHtml + "<tr><td width='6%' style='text-align:right'>"+prodresults[i].delivery_number+"</td><td width='10%' style='text-align:right'>"+prodresults[i].product_name+"</td><td width='5%' style='text-align:right'>"+(prodresults[i].gallons).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')+"</td><td width='7%' style='text-align:right'>"+prodresults[i].price_per_gallons+"</td><td width='7%' style='text-align:right'>"+(prodresults[i].gallons * prodresults[i].price_per_gallons).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')+"</td></tr>"
+          }          
+          if (prodresults[i].delivery_number.substr(0,2)=='CO'){
+            custtotalamount = custtotalamount + parseFloat(prodresults[i].gallons * prodresults[i].price_per_gallons);
+            customorderHtml = customorderHtml + "<tr><td width='6%' style='text-align:right'>"+prodresults[i].delivery_number+"</td><td width='10%' style='text-align:right'>"+prodresults[i].product_name+"</td><td width='5%' style='text-align:right'>"+(prodresults[i].gallons).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')+"</td><td width='7%' style='text-align:right'>"+prodresults[i].price_per_gallons+"</td><td width='7%' style='text-align:right'>"+(prodresults[i].gallons * prodresults[i].price_per_gallons).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')+"</td></tr>"
+          }
+          if (i==(length-1)){
+            count = count +1;
+          }
+          if (count==totalarrycount[0]){
+            console.log(".....inside send mail....");
+            finalamount = invtotalamount + intransittotalamount + custtotalamount;
+            inventoryHtml = inventoryHtml + "<tr></tr><tr><td width='6%'></td><td width='10%'></td><td width='5%'></td><td width='5%' style='text-align:right;font-weight:bold;color:black;'>Total Amount: </td><td style='text-align:right;font-weight:bold;color:black;' width='7%'>$"+invtotalamount.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')+"</td></tr></table>"
+            intransitHtml = intransitHtml + "<tr></tr><tr><td width='6%'></td><td width='10%'></td><td width='5%'></td><td width='5%' style='text-align:right;font-weight:bold;color:black;'>Total Amount: </td><td style='text-align:right;font-weight:bold;color:black;' width='7%'>$"+intransittotalamount.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')+"</td></tr></table>"
+            customorderHtml = customorderHtml + "<tr></tr><tr><td width='6%'></td><td width='10%'></td><td width='5%'></td><td width='5%' style='text-align:right;font-weight:bold;color:black;'>Total Amount: </td><td style='text-align:right;font-weight:bold;color:black;' width='7%'>$"+custtotalamount.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')+"</td></tr></table>"
+            finalhtml = "<table size='small' width='80%'><tr></tr><tr><td width='6%'></td><td width='10%'><td width='5%'></td><td width='8%' style='text-align:right;font-weight:bold;color:#0038a5;'>Grand Total Amount: </td><td style='text-align:right;font-weight:bold;color:#0038a5;' width='7%'>$"+finalamount.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')+"</td></tr></table>"
+            fullhtml = headingHtml + storenameHtml + inventoryHtml + intransitHtml + customorderHtml + finalhtml
+            let mailOptions = {
+              from: 'kovantechnology@gmail.com', 
+              to: sendEmail[0], 
+              subject: 'Your Customer Products Order Confirmation',
+              html: fullhtml
+            }
+            transporter.sendMail(mailOptions, (err, data) => {
+              if (err) {return log('Error occurs');}return log('Email sent!!!');
+            });
+          }
+        }
+        if (error) throw error;
+      });
+  }
+  console.log("...mail calling the function...");
+}
 
 
 
@@ -485,9 +690,10 @@ app.post('/updateordersummary', function (req, res) {
       var sql = "SET SQL_SAFE_UPDATES = 0";   
       db.query(sql, function (err, result) {
       });
+      console.log("......inv or transit...."+inventoryarry[0]);
       if(prod87array[0]=='UNL 87 RFG ETH 10%' && (gallons87array[0] >0)){
           console.log('..before insert...'+gallons87array[0]);
-          var sql = "INSERT INTO orders_prod_price_map(delivery_number,product_name,store_name,price_per_gallons,gallons,delivery_date,sheduled_or_transit) VALUES ('"+deliverynoarray[0]+"','"+prod87array[0]+"','"+store_name+"','"+unl87pricearray[0]+"',"+gallons87array[0]+",'"+timeInMss[0]+"','Completed')";
+          var sql = "INSERT INTO orders_prod_price_map(delivery_number,product_name,store_name,price_per_gallons,gallons,delivery_date,sheduled_or_transit) VALUES ('"+deliverynoarray[0]+"','"+prod87array[0]+"','"+store_name+"','"+unl87pricearray[0]+"',"+gallons87array[0]+",'"+timeInMss[0]+"','"+inventoryarry[0]+"')";
           db.query(sql, function (err, result) {if (err) throw err;console.log(result.affectedRows + " record(s) updated");
           });
        }
@@ -509,10 +715,15 @@ app.post('/updateordersummary', function (req, res) {
           console.log('...update..order...');
         });
       }
-
+      if(deliverynoarray[0].substr(0,2)=='CO' && prod87array[0]=='UNL 87 RFG ETH 10%' && (gallons87array[0] >0)){
+        var sql = "UPDATE elan_cust_prod_summary SET RFG87E10 = RFG87E10 + "+gallons87array[0]+" WHERE name = '"+store_name+"' and sheduled_or_transit='Custom'";
+        db.query(sql, function (err, result) {if (err) throw err;
+          console.log('...update.custom.order...');
+        });
+      }
       if(prod93array[0]=='PREM 93 RFG ETH 10%' && (gallons93array[0] >0)){
         console.log('..before insert...'+gallons93array[0]);
-        var sql = "INSERT INTO orders_prod_price_map(delivery_number,product_name,store_name,price_per_gallons,gallons,delivery_date,sheduled_or_transit) VALUES ('"+deliverynoarray[0]+"','"+prod93array[0]+"','"+store_name+"','"+unl93pricearray[0]+"',"+gallons93array[0]+",'"+timeInMss[0]+"','Completed')";
+        var sql = "INSERT INTO orders_prod_price_map(delivery_number,product_name,store_name,price_per_gallons,gallons,delivery_date,sheduled_or_transit) VALUES ('"+deliverynoarray[0]+"','"+prod93array[0]+"','"+store_name+"','"+unl93pricearray[0]+"',"+gallons93array[0]+",'"+timeInMss[0]+"','"+inventoryarry[0]+"')";
         db.query(sql, function (err, result) {if (err) throw err;console.log(result.affectedRows + " record(s) updated");
         });
       }
@@ -534,10 +745,15 @@ app.post('/updateordersummary', function (req, res) {
           console.log('...update..order...');
         });
       }
-
+      if(deliverynoarray[0].substr(0,2)=='CO' && prod93array[0]=='PREM 93 RFG ETH 10%' && (gallons93array[0] >0)){
+        var sql = "UPDATE elan_cust_prod_summary SET RFG93E10 = RFG93E10 + "+gallons93array[0]+" WHERE name = '"+store_name+"' and sheduled_or_transit='Custom'";
+        db.query(sql, function (err, result) {if (err) throw err;
+          console.log('...update.Custom.order...');
+        });
+      }
       if(produsldarray[0]=='ULSD CLEAR TXLED' && (gallonsusldarray[0] >0)){
         console.log('..before insert...'+gallonsusldarray[0]);
-        var sql = "INSERT INTO orders_prod_price_map(delivery_number,product_name,store_name,price_per_gallons,gallons,delivery_date,sheduled_or_transit) VALUES ('"+deliverynoarray[0]+"','"+produsldarray[0]+"','"+store_name+"','"+unlusldpricearray[0]+"',"+gallonsusldarray[0]+",'"+timeInMss[0]+"','Completed')";
+        var sql = "INSERT INTO orders_prod_price_map(delivery_number,product_name,store_name,price_per_gallons,gallons,delivery_date,sheduled_or_transit) VALUES ('"+deliverynoarray[0]+"','"+produsldarray[0]+"','"+store_name+"','"+unlusldpricearray[0]+"',"+gallonsusldarray[0]+",'"+timeInMss[0]+"','"+inventoryarry[0]+"')";
         db.query(sql, function (err, result) {if (err) throw err;console.log(result.affectedRows + " record(s) updated");
         });
       }
@@ -559,10 +775,15 @@ app.post('/updateordersummary', function (req, res) {
           console.log('...update..order...');
         });
       }
-
+      if(deliverynoarray[0].substr(0,2)=='CO' && produsldarray[0]=='ULSD CLEAR TXLED' && (gallonsusldarray[0] >0)){
+        var sql = "UPDATE elan_cust_prod_summary SET ULSD = ULSD + "+gallonsusldarray[0]+" WHERE name = '"+store_name+"' and sheduled_or_transit='Custom'";
+        db.query(sql, function (err, result) {if (err) throw err;
+          console.log('...update.Custom.order...');
+        });
+      }
       if(prodb20array[0]=='B20 Biodiesel' && (gallonsb20array[0] >0)){
         console.log('..before insert...'+gallonsb20array[0]);
-        var sql = "INSERT INTO orders_prod_price_map(delivery_number,product_name,store_name,price_per_gallons,gallons,delivery_date,sheduled_or_transit) VALUES ('"+deliverynoarray[0]+"','"+prodb20array[0]+"','"+store_name+"','"+unlb20pricearray[0]+"',"+gallonsb20array[0]+",'"+timeInMss[0]+"','Completed')";
+        var sql = "INSERT INTO orders_prod_price_map(delivery_number,product_name,store_name,price_per_gallons,gallons,delivery_date,sheduled_or_transit) VALUES ('"+deliverynoarray[0]+"','"+prodb20array[0]+"','"+store_name+"','"+unlb20pricearray[0]+"',"+gallonsb20array[0]+",'"+timeInMss[0]+"','"+inventoryarry[0]+"')";
         db.query(sql, function (err, result) {if (err) throw err;console.log(result.affectedRows + " record(s) updated");
         });
       }
@@ -584,6 +805,12 @@ app.post('/updateordersummary', function (req, res) {
           console.log('...update..order...');
         });
       }
+      if(deliverynoarray[0].substr(0,2)!='CO' && prodb20array[0]=='B20 Biodiesel' && (gallonsb20array[0] >0)){
+        var sql = "UPDATE elan_cust_prod_summary SET B20 = B20 + "+gallonsb20array[0]+" WHERE name = '"+store_name+"' and sheduled_or_transit='Custom'";
+        db.query(sql, function (err, result) {if (err) throw err;
+          console.log('...update.Custom.order...');
+        });
+      }
       db.query("select customer_first_name,customer_last_name,customer_address_1,customer_email,customer_phone_1 from customer where corporation_name=(select corporation_name from store where store_name='"+store_name+"')", function (error, customeresults, fields) {
       if (error) throw error;
       customer_first_name=customeresults[0].customer_first_name;       
@@ -602,6 +829,7 @@ app.post('/updateordersummary', function (req, res) {
             if (overalltotalarray[0]==insertcount){
               console.log("....overalltotalarray[0]......"+overalltotalarray[0]);
               console.log("....insertcount......."+insertcount);
+              emailSend(store_name, deliverynumberarray)
               res.send({ success: "yes" });
             } 
           });
@@ -610,7 +838,6 @@ app.post('/updateordersummary', function (req, res) {
    }
   }
 });
-
 
 app.get('/storeusers', function (req, res) {
   console.log(req.checkbox);
