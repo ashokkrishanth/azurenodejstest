@@ -10,6 +10,7 @@ require('dotenv').config();
 const bcrypt = require("bcrypt");
 const moment = require('moment');
 const nodemailer = require('nodemailer');
+const log = console.log;
 
 app.get('/test', (req,res) => res.send('Hello kishanth Ashok Pandian'));
 app.listen(port, () => console.log('Server is running on port'+port));
@@ -151,7 +152,7 @@ app.post('/getordersummary', function (req, res) {
           //console.log(return_data);
         });
         db.query("SET SESSION sql_mode=''");
-        db.query("select sum(RFG87E10) as RFG87E10,sum(RFG93E10) as RFG93E10,sum(ULSD) as ULSD,sum(B5) as B5,sum(B20) as B20,sum(DEF) as DEF from elan_cust_prod_summary where name='"+storename+"'", function (error, summaryresults, fields) {
+        db.query("select sum(RFG87E10) as RFG87E10,sum(RFG93E10) as RFG93E10,sum(ULSD) as ULSD,sum(B5) as B5,sum(B20) as B20,sum(DEF) as DEF from elan_cust_prod_summary where name='"+storename+"' and sheduled_or_transit!='Custom'", function (error, summaryresults, fields) {
           if (error) throw error;
           summRFG87E10= summaryresults[0].RFG87E10,summRFG93E10= summaryresults[0].RFG93E10,
           summULSD= summaryresults[0].ULSD,summB5= summaryresults[0].B5,
@@ -242,48 +243,48 @@ app.post('/getordersummary', function (req, res) {
                 elaninvarrayoutput.push(elaninvarray[0]); 
                 elantransitarrayoutput.push(elantransitarray[0]);
                 custominvarrayoutput.push(custominvarray[0]); 
-                custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[0]) + custominvarray[0]);
-                total = groupresults[i].tanksize - (elaninvarrayoutput[0]+elantransitarrayoutput[0]+custinvarrayoutput[0]);
+                custinvarrayoutput.push(((groupresults[i].invreadings - ullagearray[0]) + custinvarray[0] + custominvarray[0]));
+                total = groupresults[i].tanksize - (elaninvarray[0]+elantransitarray[0]+((groupresults[i].invreadings - ullagearray[0]) + custinvarray[0] + custominvarray[0]));
                 ullageoutput.item1 = total;
               }
               if(groupresults[i].tank_product=='RFG93E10'){
                 elaninvarrayoutput.push(elaninvarray[1]); 
                 elantransitarrayoutput.push(elantransitarray[1]);
                 custominvarrayoutput.push(custominvarray[1]); 
-                custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[1]) + custominvarray[1]);
-                total = groupresults[i].tanksize - (elaninvarrayoutput[1]+elantransitarrayoutput[1]+custinvarrayoutput[1]);
+                custinvarrayoutput.push(((groupresults[i].invreadings - ullagearray[1]) + custinvarray[1] + custominvarray[1]));
+                total = groupresults[i].tanksize - (elaninvarray[1]+elantransitarray[1]+((groupresults[i].invreadings - ullagearray[1]) + custinvarray[1] + custominvarray[1]));
                 ullageoutput.item2 = total;
               }
               if(groupresults[i].tank_product=='ULSD'){
                 elaninvarrayoutput.push(elaninvarray[2]); 
                 elantransitarrayoutput.push(elantransitarray[2]);
                 custominvarrayoutput.push(custominvarray[2]); 
-                custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[2]) + custominvarray[2]);
-                total = groupresults[i].tanksize - (elaninvarrayoutput[2]+elantransitarrayoutput[2]+custinvarrayoutput[2]);
+                custinvarrayoutput.push(((groupresults[i].invreadings - ullagearray[2]) + custinvarray[2] + custominvarray[2]));
+                total = groupresults[i].tanksize - (elaninvarray[2]+elantransitarray[2]+((groupresults[i].invreadings - ullagearray[2]) + custinvarray[2] + custominvarray[2]));
                 ullageoutput.item3 = total;
               }
               if(groupresults[i].tank_product=='B5'){
                 elaninvarrayoutput.push(elaninvarray[3]); 
                 elantransitarrayoutput.push(elantransitarray[3]);
                 custominvarrayoutput.push(custominvarray[3]);
-                custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[3]) + custominvarray[3]);
-                total = groupresults[i].tanksize - (elaninvarrayoutput[3]+elantransitarrayoutput[3]+custinvarrayoutput[3]);
+                custinvarrayoutput.push(((groupresults[i].invreadings - ullagearray[3]) + custinvarray[3] + custominvarray[3]));
+                total = groupresults[i].tanksize - (elaninvarray[3]+elantransitarray[3]+((groupresults[i].invreadings - ullagearray[3]) + custinvarray[3] + custominvarray[3]));
                 ullageoutput.item4 = total;
               }
               if(groupresults[i].tank_product=='B20'){
                 elaninvarrayoutput.push(elaninvarray[4]); 
                 elantransitarrayoutput.push(elantransitarray[4]);
                 custominvarrayoutput.push(custominvarray[4]);
-                custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[4]) + custominvarray[4]);
-                total = groupresults[i].tanksize - (elaninvarrayoutput[4]+elantransitarrayoutput[4]+custinvarrayoutput[4]);
+                custinvarrayoutput.push(((groupresults[i].invreadings - ullagearray[4]) + custinvarray[4] + custominvarray[4]));
+                total = groupresults[i].tanksize - (elaninvarray[4]+elantransitarray[4]+((groupresults[i].invreadings - ullagearray[4]) + custinvarray[4] + custominvarray[4]));
                 ullageoutput.item5 = total;
               }
               if(groupresults[i].tank_product=='DEF'){
                 elaninvarrayoutput.push(elaninvarray[5]); 
                 elantransitarrayoutput.push(elantransitarray[5]);
                 custominvarrayoutput.push(custominvarray[5]);
-                custinvarrayoutput.push((groupresults[i].invreadings - custinvarray[5]) + custominvarray[5]);
-                total = groupresults[i].tanksize - (elaninvarrayoutput[5]+elantransitarrayoutput[5]+custinvarrayoutput[5]);
+                custinvarrayoutput.push(((groupresults[i].invreadings - ullagearray[5]) + custinvarray[5] + custominvarray[5]));
+                total = groupresults[i].tanksize - (elaninvarrayoutput[0]+elantransitarrayoutput[0]+custinvarrayoutput[0]);
                 ullageoutput.item6 = total;
               }
             }
@@ -400,6 +401,8 @@ app.post('/getDashboardValues', function (req, res) {
             tankproductgrpoutput.push(groupresults[i].tank_product);
 
             tanksizegrpoutput.push(groupresults[i].tanksize);
+
+
             if(groupresults[i].tank_product=='RFG87E10'){
               elaninvarrayoutput.push(elaninvarray[0]); 
               elantransitarrayoutput.push(elantransitarray[0]);
@@ -409,25 +412,25 @@ app.post('/getDashboardValues', function (req, res) {
               //console.log("....subtract values....."+(groupresults[i].invreadings - ullagearray[0]));
               custominvarrayoutput.push(custominvarray[0]); 
               custinvarrayoutput.push(((groupresults[i].invreadings - ullagearray[0]) + custinvarray[0] + custominvarray[0]));
-
-              console.log("....cust array values....."+custinvarrayoutput[0]);
-              total = groupresults[i].tanksize - (elaninvarrayoutput[0]+elantransitarrayoutput[0]+custinvarrayoutput[0]);
+              total = groupresults[i].tanksize - (elaninvarray[0]+elantransitarray[0]+((groupresults[i].invreadings - ullagearray[0]) + custinvarray[0] + custominvarray[0]));
               ullageoutput.push(total);
             }
             if(groupresults[i].tank_product=='RFG93E10'){
+              console.log("...inside .RFG93E10.....");
               elaninvarrayoutput.push(elaninvarray[1]); 
               elantransitarrayoutput.push(elantransitarray[1]);
               custominvarrayoutput.push(custominvarray[1]); 
               custinvarrayoutput.push(((groupresults[i].invreadings - ullagearray[1]) + custinvarray[1] + custominvarray[1]));
-              total = groupresults[i].tanksize - (elaninvarrayoutput[1]+elantransitarrayoutput[1]+custinvarrayoutput[1]);
+              total = groupresults[i].tanksize - (elaninvarray[1]+elantransitarray[1]+((groupresults[i].invreadings - ullagearray[1]) + custinvarray[1] + custominvarray[1]));
               ullageoutput.push(total);
             }
             if(groupresults[i].tank_product=='ULSD'){
+              console.log("...inside .ULSD....");
               elaninvarrayoutput.push(elaninvarray[2]); 
               elantransitarrayoutput.push(elantransitarray[2]);
               custominvarrayoutput.push(custominvarray[2]); 
               custinvarrayoutput.push(((groupresults[i].invreadings - ullagearray[2]) + custinvarray[2] + custominvarray[2]));
-              total = groupresults[i].tanksize - (elaninvarrayoutput[2]+elantransitarrayoutput[2]+custinvarrayoutput[2]);
+              total = groupresults[i].tanksize - (elaninvarray[2]+elantransitarray[2]+((groupresults[i].invreadings - ullagearray[2]) + custinvarray[2] + custominvarray[2]));
               ullageoutput.push(total);
             }
             if(groupresults[i].tank_product=='B5'){
@@ -435,23 +438,30 @@ app.post('/getDashboardValues', function (req, res) {
               elantransitarrayoutput.push(elantransitarray[3]);
               custominvarrayoutput.push(custominvarray[3]);
               custinvarrayoutput.push(((groupresults[i].invreadings - ullagearray[3]) + custinvarray[3] + custominvarray[3]));
-              total = groupresults[i].tanksize - (elaninvarrayoutput[3]+elantransitarrayoutput[3]+custinvarrayoutput[3]);
+              total = groupresults[i].tanksize - (elaninvarray[3]+elantransitarray[3]+((groupresults[i].invreadings - ullagearray[3]) + custinvarray[3] + custominvarray[3]));
               ullageoutput.push(total);
             }
             if(groupresults[i].tank_product=='B20'){
               elaninvarrayoutput.push(elaninvarray[4]); 
               elantransitarrayoutput.push(elantransitarray[4]);
               custominvarrayoutput.push(custominvarray[4]);
+              console.log("...B20....");
+              console.log("....elaninvarray values....."+elaninvarray[4]);
+              console.log("....elantransitarray values....."+elantransitarray[4]);
+              console.log(".... custominvarray values....."+custominvarray[4]);
+              console.log("....custinvarrayoutput values....."+((groupresults[i].invreadings - ullagearray[4]) + custinvarray[4] + custominvarray[4]));
+
               custinvarrayoutput.push(((groupresults[i].invreadings - ullagearray[4]) + custinvarray[4] + custominvarray[4]));
-              total = groupresults[i].tanksize - (elaninvarrayoutput[4]+elantransitarrayoutput[4]+custinvarrayoutput[4]);
+              total = groupresults[i].tanksize - (elaninvarray[4]+elantransitarray[4]+((groupresults[i].invreadings - ullagearray[4]) + custinvarray[4] + custominvarray[4]));
               ullageoutput.push(total);
             }
             if(groupresults[i].tank_product=='DEF'){
+              
               elaninvarrayoutput.push(elaninvarray[5]); 
               elantransitarrayoutput.push(elantransitarray[5]);
               custominvarrayoutput.push(custominvarray[5]);
               custinvarrayoutput.push(((groupresults[i].invreadings - ullagearray[5]) + custinvarray[5] + custominvarray[5]));
-              total = groupresults[i].tanksize - (elaninvarrayoutput[5]+elantransitarrayoutput[5]+custinvarrayoutput[5]);
+              total = groupresults[i].tanksize - (elaninvarrayoutput[0]+elantransitarrayoutput[0]+custinvarrayoutput[0]);
               ullageoutput.push(total);
             }
           }
@@ -577,7 +587,6 @@ function emailSend(storename,getDeliveryNoArray){
 }
 
 
-
 app.post('/updateordersummary', function (req, res) {
   console.log("....inside the updateorder summary");
   //console.log(req);
@@ -697,7 +706,7 @@ app.post('/updateordersummary', function (req, res) {
       });
       console.log("......inv or transit...."+inventoryarry[0]);
       if(prod87array[0]=='UNL 87 RFG ETH 10%' && (gallons87array[0] >0)){
-          console.log('..before insert...'+gallons87array[0]);
+          console.log('..before .87...insert...'+gallons87array[0]);
           var sql = "INSERT INTO orders_prod_price_map(delivery_number,product_name,store_name,price_per_gallons,gallons,delivery_date,sheduled_or_transit) VALUES ('"+deliverynoarray[0]+"','"+prod87array[0]+"','"+store_name+"','"+unl87pricearray[0]+"',"+gallons87array[0]+",'"+timeInMss[0]+"','"+inventoryarry[0]+"')";
           db.query(sql, function (err, result) {if (err) throw err;console.log(result.affectedRows + " record(s) updated");
           });
@@ -705,29 +714,29 @@ app.post('/updateordersummary', function (req, res) {
        if(deliverynoarray[0].substr(0,2)!='CO' && prod87array[0]=='UNL 87 RFG ETH 10%' && (gallons87array[0] >0) && (inventoryarry[0]=='yes')){
         var sql = "UPDATE elan_cust_prod_summary SET RFG87E10 = RFG87E10 - "+gallons87array[0]+" WHERE name = '"+store_name+"' and sheduled_or_transit='Scheduled'";
         db.query(sql, function (err, result) {if (err) throw err;
-          console.log('...update...scheduled..');
+          console.log('...update...87....scheduled..');
         });
       }
       if(deliverynoarray[0].substr(0,2)!='CO' && prod87array[0]=='UNL 87 RFG ETH 10%' && (gallons87array[0] >0) && (inventoryarry[0]=='no')){
         var sql = "UPDATE elan_cust_prod_summary SET RFG87E10 = RFG87E10 - "+gallons87array[0]+" WHERE name = '"+store_name+"' and sheduled_or_transit='Transit'";
         db.query(sql, function (err, result) {if (err) throw err;
-          console.log('...update..transit...');
+          console.log('...update..87.....transit...');
         });
       }
       if(deliverynoarray[0].substr(0,2)!='CO' && prod87array[0]=='UNL 87 RFG ETH 10%' && (gallons87array[0] >0)){
         var sql = "UPDATE elan_cust_prod_summary SET RFG87E10 = RFG87E10 + "+gallons87array[0]+" WHERE name = '"+store_name+"' and sheduled_or_transit='Order'";
         db.query(sql, function (err, result) {if (err) throw err;
-          console.log('...update..order...');
+          console.log('...update..87....order...');
         });
       }
       if(deliverynoarray[0].substr(0,2)=='CO' && prod87array[0]=='UNL 87 RFG ETH 10%' && (gallons87array[0] >0)){
         var sql = "UPDATE elan_cust_prod_summary SET RFG87E10 = RFG87E10 + "+gallons87array[0]+" WHERE name = '"+store_name+"' and sheduled_or_transit='Custom'";
         db.query(sql, function (err, result) {if (err) throw err;
-          console.log('...update.custom.order...');
+          console.log('...update.87...custom.order...');
         });
       }
       if(prod93array[0]=='PREM 93 RFG ETH 10%' && (gallons93array[0] >0)){
-        console.log('..before insert...'+gallons93array[0]);
+        console.log('..before .93..insert...'+gallons93array[0]);
         var sql = "INSERT INTO orders_prod_price_map(delivery_number,product_name,store_name,price_per_gallons,gallons,delivery_date,sheduled_or_transit) VALUES ('"+deliverynoarray[0]+"','"+prod93array[0]+"','"+store_name+"','"+unl93pricearray[0]+"',"+gallons93array[0]+",'"+timeInMss[0]+"','"+inventoryarry[0]+"')";
         db.query(sql, function (err, result) {if (err) throw err;console.log(result.affectedRows + " record(s) updated");
         });
@@ -735,29 +744,29 @@ app.post('/updateordersummary', function (req, res) {
       if(deliverynoarray[0].substr(0,2)!='CO' && prod93array[0]=='PREM 93 RFG ETH 10%' && (gallons93array[0] >0) && (inventoryarry[0]=='yes')){
         var sql = "UPDATE elan_cust_prod_summary SET RFG93E10 = RFG93E10 - "+gallons93array[0]+" WHERE name = '"+store_name+"' and sheduled_or_transit='Scheduled'";
         db.query(sql, function (err, result) {if (err) throw err;
-          console.log('...update...scheduled..');
+          console.log('...update..93....scheduled..');
         });
       }
       if(deliverynoarray[0].substr(0,2)!='CO' && prod93array[0]=='PREM 93 RFG ETH 10%' && (gallons93array[0] >0) && (inventoryarry[0]=='no')){
         var sql = "UPDATE elan_cust_prod_summary SET RFG93E10 = RFG93E10 - "+gallons93array[0]+" WHERE name = '"+store_name+"' and sheduled_or_transit='Transit'";
         db.query(sql, function (err, result) {if (err) throw err;
-          console.log('...update..transit...');
+          console.log('...update..93...transit...');
         });
       }
       if(deliverynoarray[0].substr(0,2)!='CO' && prod93array[0]=='PREM 93 RFG ETH 10%' && (gallons93array[0] >0)){
         var sql = "UPDATE elan_cust_prod_summary SET RFG93E10 = RFG93E10 + "+gallons93array[0]+" WHERE name = '"+store_name+"' and sheduled_or_transit='Order'";
         db.query(sql, function (err, result) {if (err) throw err;
-          console.log('...update..order...');
+          console.log('...update..93...order...');
         });
       }
       if(deliverynoarray[0].substr(0,2)=='CO' && prod93array[0]=='PREM 93 RFG ETH 10%' && (gallons93array[0] >0)){
         var sql = "UPDATE elan_cust_prod_summary SET RFG93E10 = RFG93E10 + "+gallons93array[0]+" WHERE name = '"+store_name+"' and sheduled_or_transit='Custom'";
         db.query(sql, function (err, result) {if (err) throw err;
-          console.log('...update.Custom.order...');
+          console.log('...update..93...Custom.order...');
         });
       }
       if(produsldarray[0]=='ULSD CLEAR TXLED' && (gallonsusldarray[0] >0)){
-        console.log('..before insert...'+gallonsusldarray[0]);
+        console.log('..before ..ULSDinsert...'+gallonsusldarray[0]);
         var sql = "INSERT INTO orders_prod_price_map(delivery_number,product_name,store_name,price_per_gallons,gallons,delivery_date,sheduled_or_transit) VALUES ('"+deliverynoarray[0]+"','"+produsldarray[0]+"','"+store_name+"','"+unlusldpricearray[0]+"',"+gallonsusldarray[0]+",'"+timeInMss[0]+"','"+inventoryarry[0]+"')";
         db.query(sql, function (err, result) {if (err) throw err;console.log(result.affectedRows + " record(s) updated");
         });
@@ -765,29 +774,29 @@ app.post('/updateordersummary', function (req, res) {
       if(deliverynoarray[0].substr(0,2)!='CO' && produsldarray[0]=='ULSD CLEAR TXLED' && (gallonsusldarray[0] >0) && (inventoryarry[0]=='yes')){
         var sql = "UPDATE elan_cust_prod_summary SET ULSD = ULSD - "+gallonsusldarray[0]+" WHERE name = '"+store_name+"' and sheduled_or_transit='Scheduled'";
         db.query(sql, function (err, result) {if (err) throw err;
-          console.log('...update...scheduled..');
+          console.log('...update..ULSD.scheduled..');
         });
       }
       if(deliverynoarray[0].substr(0,2)!='CO' && produsldarray[0]=='ULSD CLEAR TXLED' && (gallonsusldarray[0] >0) && (inventoryarry[0]=='no')){
         var sql = "UPDATE elan_cust_prod_summary SET ULSD = ULSD - "+gallonsusldarray[0]+" WHERE name = '"+store_name+"' and sheduled_or_transit='Transit'";
         db.query(sql, function (err, result) {if (err) throw err;
-          console.log('...update..transit...');
+          console.log('...update.ULSD.transit...');
         });
       }
       if(deliverynoarray[0].substr(0,2)!='CO' && produsldarray[0]=='ULSD CLEAR TXLED' && (gallonsusldarray[0] >0)){
         var sql = "UPDATE elan_cust_prod_summary SET ULSD = ULSD + "+gallonsusldarray[0]+" WHERE name = '"+store_name+"' and sheduled_or_transit='Order'";
         db.query(sql, function (err, result) {if (err) throw err;
-          console.log('...update..order...');
+          console.log('...update..ULSD..order...');
         });
       }
       if(deliverynoarray[0].substr(0,2)=='CO' && produsldarray[0]=='ULSD CLEAR TXLED' && (gallonsusldarray[0] >0)){
         var sql = "UPDATE elan_cust_prod_summary SET ULSD = ULSD + "+gallonsusldarray[0]+" WHERE name = '"+store_name+"' and sheduled_or_transit='Custom'";
         db.query(sql, function (err, result) {if (err) throw err;
-          console.log('...update.Custom.order...');
+          console.log('...update..ULSD..Custom.order...');
         });
       }
       if(prodb20array[0]=='B20 Biodiesel' && (gallonsb20array[0] >0)){
-        console.log('..before insert...'+gallonsb20array[0]);
+        console.log('..before B20 insert...'+gallonsb20array[0]);
         var sql = "INSERT INTO orders_prod_price_map(delivery_number,product_name,store_name,price_per_gallons,gallons,delivery_date,sheduled_or_transit) VALUES ('"+deliverynoarray[0]+"','"+prodb20array[0]+"','"+store_name+"','"+unlb20pricearray[0]+"',"+gallonsb20array[0]+",'"+timeInMss[0]+"','"+inventoryarry[0]+"')";
         db.query(sql, function (err, result) {if (err) throw err;console.log(result.affectedRows + " record(s) updated");
         });
@@ -795,25 +804,25 @@ app.post('/updateordersummary', function (req, res) {
       if(deliverynoarray[0].substr(0,2)!='CO' && prodb20array[0]=='B20 Biodiesel' && (gallonsb20array[0] >0) && (inventoryarry[0]=='yes')){
         var sql = "UPDATE elan_cust_prod_summary SET B20 = B20 - "+gallonsb20array[0]+" WHERE name = '"+store_name+"' and sheduled_or_transit='Scheduled'";
         db.query(sql, function (err, result) {if (err) throw err;
-          console.log('...update...scheduled..');
+          console.log('...update. B20 ..scheduled..');
         });
       }
       if(deliverynoarray[0].substr(0,2)!='CO' && prodb20array[0]=='B20 Biodiesel' && (gallonsb20array[0] >0) && (inventoryarry[0]=='no')){
         var sql = "UPDATE elan_cust_prod_summary SET B20 = B20 - "+gallonsb20array[0]+" WHERE name = '"+store_name+"' and sheduled_or_transit='Transit'";
         db.query(sql, function (err, result) {if (err) throw err;
-          console.log('...update..transit...');
+          console.log('...update. B20 .transit...');
         });
       }
       if(deliverynoarray[0].substr(0,2)!='CO' && prodb20array[0]=='B20 Biodiesel' && (gallonsb20array[0] >0)){
         var sql = "UPDATE elan_cust_prod_summary SET B20 = B20 + "+gallonsb20array[0]+" WHERE name = '"+store_name+"' and sheduled_or_transit='Order'";
         db.query(sql, function (err, result) {if (err) throw err;
-          console.log('...update..order...');
+          console.log('...update. B20 .order...');
         });
       }
-      if(deliverynoarray[0].substr(0,2)!='CO' && prodb20array[0]=='B20 Biodiesel' && (gallonsb20array[0] >0)){
+      if(deliverynoarray[0].substr(0,2)=='CO' && prodb20array[0]=='B20 Biodiesel' && (gallonsb20array[0] >0)){
         var sql = "UPDATE elan_cust_prod_summary SET B20 = B20 + "+gallonsb20array[0]+" WHERE name = '"+store_name+"' and sheduled_or_transit='Custom'";
         db.query(sql, function (err, result) {if (err) throw err;
-          console.log('...update.Custom.order...');
+          console.log('...update..B20.Custom.order...');
         });
       }
       db.query("select customer_first_name,customer_last_name,customer_address_1,customer_email,customer_phone_1 from customer where corporation_name=(select corporation_name from store where store_name='"+store_name+"')", function (error, customeresults, fields) {
