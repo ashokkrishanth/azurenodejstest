@@ -508,10 +508,9 @@ function emailSend(storename,getDeliveryNoArray){
   let transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.EMAIL,
-        pass: process.env.PASSWORD 
+        user: 'unicoelan@gmail.com',
+        pass: 'elan#123' 
     }
-    
   });
   var count=0;
   var invtotalamount = 0;
