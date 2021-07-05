@@ -575,7 +575,7 @@ function emailSend(storename,getDeliveryNoArray){
               html: fullhtml
             }
             transporter.sendMail(mailOptions, (err, data) => {
-              if (err) {return log('Error occurs');}return log('Email sent!!!');
+              if (err) {return log(new Error().stack);}return log('Email sent!!!');
             });
           }
         }
