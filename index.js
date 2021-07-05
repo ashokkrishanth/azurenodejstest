@@ -511,9 +511,11 @@ function emailSend(storename,getDeliveryNoArray){
         user: 'unicoelan@gmail.com',
         pass: 'elan*123' 
     }
+    
   });
   var count=0;
   var invtotalamount = 0;
+  var storeinvcheck = false; intransitcheck = false; customcheck = false;
   var intransittotalamount = 0;
   var custtotalamount = 0;
   var totalamountarr = [];
@@ -546,16 +548,19 @@ function emailSend(storename,getDeliveryNoArray){
         {
  
           if (prodresults[i].delivery_number.substr(0,2)!='CO' && prodresults[i].sheduled_or_transit=='yes'){
+            storeinvcheck = true;
             invtotalamount = invtotalamount + parseFloat(prodresults[i].gallons * prodresults[i].price_per_gallons);
             inventoryHtml = inventoryHtml + "<tr><td width='6%' style='text-align:right'>"+prodresults[i].delivery_number+"</td><td width='10%' style='text-align:right'>"+prodresults[i].product_name+"</td><td width='5%' style='text-align:right'>"+(prodresults[i].gallons).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')+"</td><td width='7%' style='text-align:right'>"+prodresults[i].price_per_gallons+"</td><td width='7%' style='text-align:right'>"+(prodresults[i].gallons * prodresults[i].price_per_gallons).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')+"</td></tr>"
           } 
           if (prodresults[i].delivery_number.substr(0,2)!='CO' && prodresults[i].sheduled_or_transit=='no'){
             intransittotalamount = intransittotalamount + parseFloat(prodresults[i].gallons * prodresults[i].price_per_gallons);
             intransitHtml = intransitHtml + "<tr><td width='6%' style='text-align:right'>"+prodresults[i].delivery_number+"</td><td width='10%' style='text-align:right'>"+prodresults[i].product_name+"</td><td width='5%' style='text-align:right'>"+(prodresults[i].gallons).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')+"</td><td width='7%' style='text-align:right'>"+prodresults[i].price_per_gallons+"</td><td width='7%' style='text-align:right'>"+(prodresults[i].gallons * prodresults[i].price_per_gallons).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')+"</td></tr>"
+            intransitcheck = true;
           }          
           if (prodresults[i].delivery_number.substr(0,2)=='CO'){
             custtotalamount = custtotalamount + parseFloat(prodresults[i].gallons * prodresults[i].price_per_gallons);
             customorderHtml = customorderHtml + "<tr><td width='6%' style='text-align:right'>"+prodresults[i].delivery_number+"</td><td width='10%' style='text-align:right'>"+prodresults[i].product_name+"</td><td width='5%' style='text-align:right'>"+(prodresults[i].gallons).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')+"</td><td width='7%' style='text-align:right'>"+prodresults[i].price_per_gallons+"</td><td width='7%' style='text-align:right'>"+(prodresults[i].gallons * prodresults[i].price_per_gallons).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')+"</td></tr>"
+            customcheck = true;
           }
           if (i==(length-1)){
             count = count +1;
@@ -567,7 +572,28 @@ function emailSend(storename,getDeliveryNoArray){
             intransitHtml = intransitHtml + "<tr></tr><tr><td width='6%'></td><td width='10%'></td><td width='5%'></td><td width='5%' style='text-align:right;font-weight:bold;color:black;'>Total Amount: </td><td style='text-align:right;font-weight:bold;color:black;' width='7%'>$"+intransittotalamount.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')+"</td></tr></table>"
             customorderHtml = customorderHtml + "<tr></tr><tr><td width='6%'></td><td width='10%'></td><td width='5%'></td><td width='5%' style='text-align:right;font-weight:bold;color:black;'>Total Amount: </td><td style='text-align:right;font-weight:bold;color:black;' width='7%'>$"+custtotalamount.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')+"</td></tr></table>"
             finalhtml = "<table size='small' width='80%'><tr></tr><tr><td width='6%'></td><td width='10%'><td width='5%'></td><td width='8%' style='text-align:right;font-weight:bold;color:#0038a5;'>Grand Total Amount: </td><td style='text-align:right;font-weight:bold;color:#0038a5;' width='7%'>$"+finalamount.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')+"</td></tr></table>"
+            if (storeinvcheck==true && intransitcheck == true && customcheck == true){
             fullhtml = headingHtml + storenameHtml + inventoryHtml + intransitHtml + customorderHtml + finalhtml
+            }
+            if (storeinvcheck==true && intransitcheck == false && customcheck == false){
+              fullhtml = headingHtml + storenameHtml + inventoryHtml + finalhtml
+            }
+            if (storeinvcheck==true && intransitcheck == true && customcheck == false){
+              fullhtml = headingHtml + storenameHtml + inventoryHtml + intransitHtml + finalhtml
+              }
+            if (storeinvcheck==true && intransitcheck == false && customcheck == true){
+              fullhtml = headingHtml + storenameHtml + inventoryHtml + customorderHtml + finalhtml
+              }            
+            if (storeinvcheck==false && intransitcheck == true && customcheck == true){
+              fullhtml = headingHtml + storenameHtml + intransitHtml + customorderHtml + finalhtml
+            }
+            if (storeinvcheck==false && intransitcheck == true && customcheck == false){
+              fullhtml = headingHtml + storenameHtml + intransitHtml + finalhtml
+            }
+            if (storeinvcheck==false && intransitcheck == false && customcheck == true){
+              fullhtml = headingHtml + storenameHtml + customorderHtml + finalhtml
+            }     
+         
             let mailOptions = {
               from: 'kovantechnology@gmail.com', 
               to: sendEmail[0], 
