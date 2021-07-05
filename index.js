@@ -509,7 +509,7 @@ function emailSend(storename,getDeliveryNoArray){
     service: 'gmail',
     auth: {
         user: 'unicoelan@gmail.com',
-        pass: 'elan#123' 
+        pass: 'elan*123' 
     }
   });
   var count=0;
