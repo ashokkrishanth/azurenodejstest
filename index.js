@@ -160,9 +160,9 @@ app.post('/getordersummary', function (req, res) {
           //console.log("..insdie the summay function.....");
           ullagearray.push(summRFG87E10), 
           ullagearray.push(summRFG93E10), 
-          ullagearray.push(summULSD), 
+          ullagearray.push(summULSD),
+          ullagearray.push(summB20),  
           ullagearray.push(summB5), 
-          ullagearray.push(summB20), 
           ullagearray.push(summDEF);
           // var summRFG87E10=0, summRFG93E10=0, summULSD=0, summB5=0, summB20=0, summDEF=0;
 
@@ -181,8 +181,8 @@ app.post('/getordersummary', function (req, res) {
             elaninvarray.push(results[0].RFG87E10);
             elaninvarray.push(results[0].RFG93E10);
             elaninvarray.push(results[0].ULSD);
-            elaninvarray.push(results[0].B5);
             elaninvarray.push(results[0].B20);
+            elaninvarray.push(results[0].B5);
             elaninvarray.push(results[0].DEF);
             //console.log(elaninvarray);
           if (error) throw error;
@@ -191,8 +191,8 @@ app.post('/getordersummary', function (req, res) {
             elantransitarray.push(results[0].RFG87E10);
             elantransitarray.push(results[0].RFG93E10);
             elantransitarray.push(results[0].ULSD);
-            elantransitarray.push(results[0].B5);
             elantransitarray.push(results[0].B20);
+            elantransitarray.push(results[0].B5);
             elantransitarray.push(results[0].DEF);
             if (error) throw error;
           });
@@ -202,8 +202,8 @@ app.post('/getordersummary', function (req, res) {
             custinvarray.push(results[0].RFG87E10);
             custinvarray.push(results[0].RFG93E10);
             custinvarray.push(results[0].ULSD);
-            custinvarray.push(results[0].B5);
             custinvarray.push(results[0].B20);
+            custinvarray.push(results[0].B5);
             custinvarray.push(results[0].DEF);
             return_data.custinv = results;
           });
@@ -212,8 +212,8 @@ app.post('/getordersummary', function (req, res) {
             custominvarray.push(results[0].RFG87E10);
             custominvarray.push(results[0].RFG93E10);
             custominvarray.push(results[0].ULSD);
-            custominvarray.push(results[0].B5);
             custominvarray.push(results[0].B20);
+            custominvarray.push(results[0].B5);
             custominvarray.push(results[0].DEF);
             return_data.custominv = results;
           });
@@ -226,8 +226,8 @@ app.post('/getordersummary', function (req, res) {
             ullagearray.push(summRFG87E10), 
             ullagearray.push(summRFG93E10), 
             ullagearray.push(summULSD), 
-            ullagearray.push(summB5), 
             ullagearray.push(summB20), 
+            ullagearray.push(summB5), 
             ullagearray.push(summDEF);
           });
           var gocount=0;
@@ -263,7 +263,7 @@ app.post('/getordersummary', function (req, res) {
                 total = groupresults[i].tanksize - (elaninvarray[2]+elantransitarray[2]+((groupresults[i].invreadings - ullagearray[2]) + custinvarray[2] + custominvarray[2]));
                 ullageoutput.item3 = total;
               }
-              if(groupresults[i].tank_product=='B5'){
+              if(groupresults[i].tank_product=='B20'){
                 elaninvarrayoutput.push(elaninvarray[3]); 
                 elantransitarrayoutput.push(elantransitarray[3]);
                 custominvarrayoutput.push(custominvarray[3]);
@@ -271,7 +271,7 @@ app.post('/getordersummary', function (req, res) {
                 total = groupresults[i].tanksize - (elaninvarray[3]+elantransitarray[3]+((groupresults[i].invreadings - ullagearray[3]) + custinvarray[3] + custominvarray[3]));
                 ullageoutput.item4 = total;
               }
-              if(groupresults[i].tank_product=='B20'){
+              if(groupresults[i].tank_product=='B5'){
                 elaninvarrayoutput.push(elaninvarray[4]); 
                 elantransitarrayoutput.push(elantransitarray[4]);
                 custominvarrayoutput.push(custominvarray[4]);
